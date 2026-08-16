@@ -38,6 +38,12 @@ export const BG = '#05060d';
  *  1/sqrt(orbitRadius), so inner bodies visibly move faster. */
 export const BASE_PERIOD_S = 180;
 
+/** Reference period for a body's innermost moon (Phase 3 pedagogical content doesn't exist
+ *  yet, so moon sub-orbits are placeholder geometry — see engine/scene.ts). Deliberately much
+ *  faster than BASE_PERIOD_S so moon motion reads clearly at the zoom level moons are visible
+ *  at. Same 1/sqrt(orbitRadius) scaling as planet periods. */
+export const MOON_BASE_PERIOD_S = 20;
+
 export const STAR_LAYERS = [
   { count: 700, parallax: 0.15, size: [0.6, 1.2], alpha: [0.25, 0.55] },
   { count: 320, parallax: 0.4, size: [0.9, 1.8], alpha: [0.35, 0.75] },
