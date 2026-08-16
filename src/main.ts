@@ -13,6 +13,7 @@ import { Camera } from './engine/camera.ts';
 import { createStarfield } from './render/starfield.ts';
 import { drawOrbit } from './render/orbit.ts';
 import { drawPlanet } from './render/planet.ts';
+import { drawStar } from './render/star.ts';
 import { system } from './content/system.ts';
 import { TILT } from './engine/constants.ts';
 
@@ -45,6 +46,10 @@ startLoop((dt, t) => {
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, camera.vw, camera.vh);
   starfield.draw(ctx, camera, t);
+
+  for (const star of system.stars) {
+    drawStar(ctx, camera, { id: star.id, wx: star.at[0], wy: star.at[1], radius: star.radius, hue: star.hue }, t);
+  }
 
   for (const body of system.bodies) {
     const star = starById.get(body.litBy);
