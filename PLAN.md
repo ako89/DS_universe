@@ -372,25 +372,67 @@ snap instantly instead of tweening. A real bug (a negative-radius `ctx.arc()` ca
 killed the render loop for any body under 1px on screen — i.e. every moon at the default zoom) was
 found and fixed in the course of this verification.
 
-### Phase 2 — UI shell, then freeze the schema
+### Phase 2 — UI shell, then freeze the schema ✅ complete
 
 - [x] `types/content.ts` — verbatim from [ENGINE_SPEC §7](docs/ENGINE_SPEC.md#7-the-content-schema).
       **Pulled forward into Phase 1** — engine/scene.ts needed it; see the Phase 1 completion note
-      above. Not yet pressure-tested against real entries, so not "frozen" until the 3 sample
-      entries below are written and checked against it.
-- [ ] `data/registry.ts` — `import.meta.glob` discovery, flat entry map, dev-time duplicate check
-- [ ] `tools/validate-content.ts` — unique ids, `related` resolves, tier completeness,
-      system↔content parity
-- [ ] `ui/tooltip.ts` — hover delays, viewport-edge flipping
-- [ ] `ui/card.ts` — all 8 sections, collapse state, 180ms crossfade, focus trap, Esc to close
-- [ ] Wire KaTeX to render `math.latex` lazily (only when the section is expanded)
-- [ ] `ui/breadcrumb.ts` · `ui/help.ts` (`?` overlay)
-- [ ] Mobile: bottom sheet, tap-to-hover-then-select, breakpoints
-- [ ] **Write 3 complete entries** — `linear-regression`, `dbscan`, `self-attention` — to
-      pressure-test the schema against a simple, a mid and a modern case
-- [ ] **Freeze `types/content.ts`.** Any change after this requires asking first.
+      above. Pressure-tested against the 3 sample entries below with no field changes needed —
+      **frozen**, see the file's header comment.
+- [x] `data/registry.ts` — `import.meta.glob` discovery, flat entry map, dev-time duplicate check
+- [x] `tools/validate-content.ts` — unique ids, `related` resolves, tier completeness,
+      system↔content parity (one-directional — see the file's header comment for why)
+- [x] `ui/tooltip.ts` — hover delays, viewport-edge flipping
+- [x] `ui/card.ts` — all 8 sections, collapse state, 180ms crossfade, focus trap, Esc to close
+      (section markup split into `ui/card-sections.ts` to hold the 300-line file cap)
+- [x] Wire KaTeX to render `math.latex` lazily (only when the section is expanded) — `ui/math.ts`
+- [x] `ui/breadcrumb.ts` · `ui/help.ts` (`?` overlay)
+- [x] Mobile: bottom sheet, tap-to-hover-then-select, breakpoints
+- [x] **Write 3 complete entries** — `linear-regression`, `dbscan`, `self-attention` — to
+      pressure-test the schema against a simple, a mid and a modern case. Written from sources
+      per CONTENT_GUIDE §3; see `src/content/bodies/{mercury,jupiter,nova}.ts` file headers for
+      what was checked and a network-access caveat for this session (below).
+- [x] **Freeze `types/content.ts`.** Any change after this requires asking first.
 - **Done when:** all three cards render fully, math renders, cross-links fly the camera, and
-  `npm run validate` exits 0.
+  `npm run validate` exits 0. ✅ **Verified** — see the Phase 2 completion note below.
+
+**Phase 2 complete.** Verified end-to-end with headless Playwright against the real dev server,
+desktop (1440×900) and mobile (390×844) viewports: clicking a body label flies the camera and
+enters its 'body' state; hovering a moon with real content shows a tooltip and clicking it opens
+the card with all sections rendering (header chips, intuition, how-it-works with hyperparameter
+table, when-to-use/when-it-fails two-column layout); expanding "The math" lazy-loads KaTeX and
+renders it (confirmed 2 `.katex` elements for DBSCAN's two expressions); expanding "In code" shows
+the code block; clicking a related chip flies the camera to a different body and crossfades the
+card to that entry, with the breadcrumb and accent-hue border updating correctly; the `?` overlay
+opens and traps focus, and Escape closes it before falling through to view-state back-navigation;
+on a narrow mobile viewport the card renders as a bottom sheet with a drag handle, and a first tap
+on a moon shows its tooltip without navigating while a second tap on the same moon opens the card
+(confirmed with real `touchscreen.tap()`, not mouse events). `npm run validate`, `npm run build`
+and `npm test` all pass; zero console errors across the whole flow.
+
+Two real bugs were found and fixed in the course of this verification, consistent with the Phase 1
+note that canvas/UI code which typechecks cleanly is routinely wrong on screen: (1) body labels had
+`cursor: pointer` in CSS but no click handler wired to them at all — clicking a label did nothing;
+`render/labels.ts` now takes an `onClick` callback. (2) the card's sticky header used the
+intentionally-translucent `--bg-raised` token, so content scrolling underneath showed through it;
+`card.css`'s `.card-header` now uses an opaque flattened color.
+
+**A tooling constraint hit during content research, worth flagging for future phases:** this
+session's `WebFetch` tool returned `EGRESS_BLOCKED` for every external domain tried (scikit-learn.org,
+arxiv.org, en.wikipedia.org, york.ac.uk), and a raw `curl` through the session's own configured
+proxy to the same host got a `403` from the proxy — a genuine environment/network policy for this
+session, not a bug to route around. `WebSearch` still worked and returns real crawled excerpts
+with real URLs, so research proceeded on that alone; every fact in the 3 entries was corroborated
+that way (see each content file's header for specifics), but CONTENT_GUIDE §3's "verify every URL
+by opening it" step could not be done literally. Re-run `npm run check-links` (Phase 3) in an
+environment with unrestricted web access before shipping these three entries, and expect the same
+constraint to affect Phase 3's much larger research load unless the policy differs there.
+
+Two further engine/input changes landed alongside the UI shell, both anticipated by Phase 1's own
+file comments rather than scope creep: `engine/scene.ts`'s `SceneMoon` now carries a real `id`
+where a moon's content module exists (anonymous otherwise — nothing invented for unwritten moons),
+and `engine/picking.ts`'s `hitTest` resolves a moon's `entryId` for the currently focused body. That
+in turn let `←/→` (previous/next sibling moon) get wired in `engine/input.ts`, which Phase 1 had
+explicitly left unwired pending exactly this.
 
 ### Phase 3 — Content (the long pole)
 

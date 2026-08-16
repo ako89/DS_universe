@@ -93,8 +93,9 @@ async function main(): Promise<void> {
   let filenames: string[];
   try {
     filenames = (await readdir(bodiesDir)).filter((f) => f.endsWith('.ts'));
-  } catch {
-    filenames = [];
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    filenames = []; // no body written yet at all — expected in early Phase 3
   }
 
   const bodiesById = new Map<string, { file: string; body: Body }>();

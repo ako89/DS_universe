@@ -42,7 +42,7 @@ export interface LabelLayer {
   destroy(): void;
 }
 
-export function createLabelLayer(container: HTMLElement): LabelLayer {
+export function createLabelLayer(container: HTMLElement, onClick?: (id: string) => void): LabelLayer {
   const entries = new Map<string, LabelEntry>();
 
   function ensure(target: LabelTarget): LabelEntry {
@@ -52,6 +52,9 @@ export function createLabelLayer(container: HTMLElement): LabelLayer {
     const el = document.createElement('div');
     el.className = 'body-label';
     el.textContent = target.name;
+    // The label has its own CSS cursor: pointer (main.css), so it needs its own click handler —
+    // clicking it doesn't reach the canvas underneath (`#overlay` sits above `#scene`).
+    if (onClick) el.addEventListener('click', () => onClick(target.id));
     container.appendChild(el);
 
     // Measured once at creation time (text never changes after) so per-frame updates only

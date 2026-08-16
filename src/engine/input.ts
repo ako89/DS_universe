@@ -1,12 +1,9 @@
 /**
  * User input: drag-pan, cursor-anchored wheel zoom, touch (drag + pinch), and the keyboard map
  * from docs/ENGINE_SPEC.md §3. This module only translates raw events into camera moves and
- * handler calls — it holds no view state of its own. `?`/`A`/`/` open UI that doesn't exist
- * until Phase 2/4; callers simply don't pass those handlers yet.
- *
- * `←/→` (previous/next sibling moon) is not wired yet: it needs a "currently selected moon",
- * and moons have no stable id until Phase 2/3 gives them one (see engine/picking.ts's file
- * comment for why). Wire it once that exists rather than working around it here.
+ * handler calls — it holds no view state of its own; `getFocusBodyId`/`getFocusEntryId` let it
+ * query the caller's current ViewState without owning it. `A`/`/` toggle UI that doesn't exist
+ * until Phase 4; callers simply don't pass those handlers yet.
  */
 
 import type { Camera } from './camera.ts';
@@ -16,13 +13,21 @@ import { ZOOM_STEP } from './constants.ts';
 
 export interface InputHandlers {
   onSelectBody?(bodyId: string): void;
+  onSelectEntry?(bodyId: string, entryId: string): void;
   onBack?(): void;
   onReset?(): void;
   onToggleSearch?(): void;
   onToggleAdvisor?(): void;
   onToggleHelp?(): void;
   onToggleDevOverlay?(): void;
-  onHover?(bodyId: string | null): void;
+  onHover?(bodyId: string | null, entryId: string | undefined, clientX: number, clientY: number): void;
+  /** Which body is currently focused ('body'/'detail' ViewState level), so hitTest knows whose
+   *  moons are eligible to be hit. Absent/undefined in the 'universe' state, where no moon is
+   *  visible yet. */
+  getFocusBodyId?(): string | undefined;
+  /** The entry currently open in the card ('detail' ViewState level only), so ←/→ knows which
+   *  sibling moon to move to. */
+  getFocusEntryId?(): string | undefined;
 }
 
 const CLICK_DRAG_THRESHOLD_PX = 4;
@@ -47,12 +52,18 @@ export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: S
   let lastX = 0;
   let lastY = 0;
   let hoveredId: string | null = null;
+  let hoveredEntryId: string | null = null;
+  let lastClientX = 0;
+  let lastClientY = 0;
 
-  function setHovered(id: string | null): void {
-    if (id === hoveredId) return;
+  function setHovered(hit: { bodyId: string; entryId?: string } | null, clientX = lastClientX, clientY = lastClientY): void {
+    const id = hit?.bodyId ?? null;
+    const entryId = hit?.entryId ?? null;
+    if (id === hoveredId && entryId === hoveredEntryId) return;
     hoveredId = id;
+    hoveredEntryId = entryId;
     canvas.classList.toggle('is-over-body', id !== null);
-    handlers.onHover?.(id);
+    handlers.onHover?.(id, entryId ?? undefined, clientX, clientY);
   }
 
   function onPointerDown(e: PointerEvent): void {
@@ -66,6 +77,9 @@ export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: S
   }
 
   function onPointerMove(e: PointerEvent): void {
+    lastClientX = e.clientX;
+    lastClientY = e.clientY;
+
     if (dragging) {
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
@@ -77,7 +91,7 @@ export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: S
     }
 
     const p = canvasPoint(canvas, e.clientX, e.clientY);
-    setHovered(hitTest(bodies, camera, p.x, p.y)?.bodyId ?? null);
+    setHovered(hitTest(bodies, camera, p.x, p.y, handlers.getFocusBodyId?.()), e.clientX, e.clientY);
   }
 
   function onPointerUp(e: PointerEvent): void {
@@ -86,16 +100,32 @@ export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: S
     canvas.classList.remove('is-dragging');
     canvas.releasePointerCapture(e.pointerId);
 
-    if (!dragMoved) {
-      const p = canvasPoint(canvas, e.clientX, e.clientY);
-      const hit = hitTest(bodies, camera, p.x, p.y);
-      if (hit) handlers.onSelectBody?.(hit.bodyId);
+    if (dragMoved) return;
+
+    const p = canvasPoint(canvas, e.clientX, e.clientY);
+    const hit = hitTest(bodies, camera, p.x, p.y, handlers.getFocusBodyId?.());
+
+    // Touch has no hover, so the first tap on a new target shows its tooltip (ENGINE_SPEC §3's
+    // "first tap shows tooltip, second enters") instead of selecting immediately; a second tap
+    // on the same still-hovered target falls through to select below.
+    if (e.pointerType === 'touch') {
+      const alreadyHovered = hit !== null && hit.bodyId === hoveredId && (hit.entryId ?? null) === hoveredEntryId;
+      if (!alreadyHovered) {
+        setHovered(hit, e.clientX, e.clientY);
+        return;
+      }
+    }
+
+    if (hit?.entryId) {
+      handlers.onSelectEntry?.(hit.bodyId, hit.entryId);
+    } else if (hit) {
+      handlers.onSelectBody?.(hit.bodyId);
     }
   }
 
   function onDoubleClick(e: MouseEvent): void {
     const p = canvasPoint(canvas, e.clientX, e.clientY);
-    if (!hitTest(bodies, camera, p.x, p.y)) handlers.onReset?.();
+    if (!hitTest(bodies, camera, p.x, p.y, handlers.getFocusBodyId?.())) handlers.onReset?.();
   }
 
   function onWheel(e: WheelEvent): void {
@@ -185,6 +215,13 @@ export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: S
       case 'D':
         handlers.onToggleDevOverlay?.();
         break;
+      case 'Enter':
+        if (hoveredEntryId && hoveredId) {
+          handlers.onSelectEntry?.(hoveredId, hoveredEntryId);
+        } else if (hoveredId) {
+          handlers.onSelectBody?.(hoveredId);
+        }
+        break;
       case 'Tab': {
         const order = orbitalOrder(bodies);
         if (order.length === 0) break;
@@ -192,7 +229,23 @@ export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: S
         const currentIndex = hoveredId ? order.findIndex((b) => b.id === hoveredId) : -1;
         const nextIndex = e.shiftKey ? (currentIndex - 1 + order.length) % order.length : (currentIndex + 1) % order.length;
         const next = order[nextIndex];
-        if (next) setHovered(next.id);
+        if (next) setHovered({ bodyId: next.id });
+        break;
+      }
+      case 'ArrowLeft':
+      case 'ArrowRight': {
+        const bodyId = handlers.getFocusBodyId?.();
+        const entryId = handlers.getFocusEntryId?.();
+        if (!bodyId || !entryId) break;
+        const body = bodies.find((b) => b.id === bodyId);
+        if (!body) break;
+        const siblingIds = body.moons.map((m) => m.id).filter((id): id is string => id !== undefined);
+        const currentIndex = siblingIds.indexOf(entryId);
+        if (siblingIds.length === 0 || currentIndex === -1) break;
+        e.preventDefault();
+        const delta = e.key === 'ArrowLeft' ? -1 : 1;
+        const nextId = siblingIds[(currentIndex + delta + siblingIds.length) % siblingIds.length];
+        if (nextId && nextId !== entryId) handlers.onSelectEntry?.(bodyId, nextId);
         break;
       }
       default:
