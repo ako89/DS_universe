@@ -181,9 +181,46 @@ Then read, don't skim:
       a fabricated arXiv ID looks completely authentic.
 - [ ] **Check `whenToUse` against the bar** in CONTENT_GUIDE §1. Vague entries silently degrade
       the advisor, and you won't notice until Phase 4 gives bad answers.
-- [ ] **Commit the batch** as one commit, e.g. `Content: inner system (mercury, venus, terra, mars)`.
 
 Then run `npm run check-links` once at the end of all seven batches, not per batch.
+
+### Shipping the batch as a pull request
+
+This project uses **one PR per batch** — not one per agent. Agents never commit (§3, rule 4), so
+the branch and the PR are yours to make after review.
+
+```bash
+git switch -c content-batch-1
+```
+
+```bash
+git add -A
+```
+
+```bash
+git commit -m "Content: inner system (mercury, venus, terra, mars)"
+```
+
+```bash
+git push -u origin content-batch-1
+```
+
+Pushing a new branch makes git print a `pull/new/<branch>` URL. Open it, click *Create pull
+request*, review the diff on GitHub, merge. Then before the next batch:
+
+```bash
+git switch main
+```
+
+```bash
+git pull
+```
+
+Reviewing on GitHub is genuinely useful here rather than ceremony: the unified diff surfaces
+repeated phrasing across entries far faster than opening files one at a time — and repetitive
+phrasing is exactly what parallel content agents produce.
+
+Seven batch PRs is the right granularity. Twenty-seven, one per body, would be misery.
 
 ---
 
@@ -204,7 +241,43 @@ mechanically. That one needs your eyes.
 
 ---
 
-## 9. What this costs
+## 9. Running it while you're away
+
+A content batch takes a while, and the point of running four agents is that you go and do
+something else. Two things determine whether that actually works.
+
+### Approvals multiply with agent count
+
+Every agent hits permission prompts independently — writing files, running `npm run build`.
+Four agents means roughly four times the interruptions, and a batch stalls on the first one that
+goes unanswered. Before launching a batch, make sure the routine operations are pre-approved so
+nothing blocks on a prompt you aren't there to answer. For content batches the operations are
+narrow and predictable: write to `src/content/bodies/*`, run `npm run build`, run
+`npm run validate`.
+
+Deliberately *not* pre-approved: anything touching `git`. Agents don't commit, and that rule is
+easier to hold if the capability isn't there in the first place.
+
+### Remote Control is per-session
+
+Remote Control links the Claude phone app to **one running session**. It does not follow you
+between projects — a session connected under a different project does not cover this one. If you
+want approvals to reach your phone while a batch runs here, connect Remote Control **from the
+session running in this repo**, and confirm the connection before you walk away rather than
+discovering it mid-batch.
+
+A session cannot see its own Remote Control state from the inside, so don't expect the agent to
+tell you whether it's connected — verify it in the app.
+
+### Notifications
+
+Notifications are suppressed while you're actively at the terminal and fire when you've stepped
+away. They tell you something needs attention; you still approve in the app. So the loop is
+*get pinged → open the app → approve*, not *approve from the notification*.
+
+---
+
+## 10. What this costs
 
 Each agent starts with an empty context and re-reads the two guides — roughly 6–8k tokens of
 reading before it writes anything. Four agents per batch, seven batches, is ~28 cold starts.
@@ -216,10 +289,20 @@ be consistent anyway.
 
 ---
 
-## 10. Recommended sequence from here
+## 11. Recommended sequence from here
+
+Each numbered step is one branch and one PR.
 
 1. **One agent, Phase 1** (engine). Sequential, ~11 modules. Do not parallelize.
-2. **Same or one agent, Phase 2** (UI shell + schema + 3 sample entries). Freeze the schema.
-3. **Parallel, Phase 3** — batch 1, review hard, recalibrate the brief, then batches 2–7.
-4. **One agent, Phase 4** (search + advisor).
-5. **One agent, Phase 5–6** (polish + deploy).
+   Branch `phase-1-engine`.
+2. **One agent, Phase 2** (UI shell + schema + 3 sample entries). Freeze the schema.
+   Branch `phase-2-ui`.
+3. **Parallel, Phase 3** — batch 1 alone, review hard, recalibrate the brief, then batches 2–7.
+   Branches `content-batch-1` … `content-batch-7`.
+4. **One agent, Phase 4** (search + advisor). Branch `phase-4-advisor`.
+5. **One agent, Phases 5–6** (polish + deploy). Branches `phase-5-polish`, `phase-6-deploy`.
+
+Phase 1 is a good first PR to review closely — it's the code you'll be living with longest, and
+[ENGINE_SPEC §8](ENGINE_SPEC.md#8-coordinate-systems--read-this-before-touching-the-engine) gives
+you specific things to check it against (is the orbital tilt in the path rather than the camera?
+is `zoomAt` implemented exactly as specified?).
