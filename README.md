@@ -8,8 +8,9 @@ Each major segment of the field is a planetary body. Hover for a one-line hook; 
 reveal the individual algorithms as moons, and open a card that goes as deep as you want: plain
 intuition first, the maths behind a fold, and links to real books, papers and lectures.
 
-> **Status: early.** Phase 0 (scaffold) is complete. The engine, content and search are not built
-> yet. See [PLAN.md](PLAN.md) for the phase checklist.
+> **Status: early.** Phases 0–1 (scaffold, engine) are complete — the orrery renders, animates,
+> and is fully navigable (pan/zoom/click/keyboard/touch). Content, search, and the UI chrome
+> (cards, tooltips) are not built yet. See [PLAN.md](PLAN.md) for the phase checklist.
 
 ## Running it
 

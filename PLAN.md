@@ -329,31 +329,55 @@ Phases 0–2 are sequential. Phase 3 (content) can run parallel with 4–5 once 
 Read [ENGINE_SPEC](docs/ENGINE_SPEC.md) §8 (coordinate systems) and §9 (module contracts) first.
 Each item ends with: run `npm run dev` and confirm on screen.
 
-- [ ] `engine/rng.ts` — `mulberry32`. *Done when:* the same seed gives the same sequence twice.
-- [ ] `engine/canvas.ts` — DPR sizing per ENGINE_SPEC §8, resize observer, RAF loop with
+- [x] `engine/rng.ts` — `mulberry32`. *Done when:* the same seed gives the same sequence twice.
+- [x] `engine/canvas.ts` — DPR sizing per ENGINE_SPEC §8, resize observer, RAF loop with
       `DT_CLAMP`. Delete the placeholder `resize()` in `main.ts` when this lands.
       *Done when:* a test rect stays sharp on a HiDPI display and correct after window resize.
-- [ ] `engine/camera.ts` — per the §9 contract; `zoomAt` exactly as ENGINE_SPEC §8.
+- [x] `engine/camera.ts` — per the §9 contract; `zoomAt` exactly as ENGINE_SPEC §8.
       *Done when:* `tests/camera.test.ts` proves the world point under the cursor is invariant
       across a zoom, and pan+zoom round-trips through `screenToWorld`/`worldToScreen`.
-- [ ] `render/starfield.ts` — 3 offscreen layers, blit with parallax + wrap, per-layer twinkle.
+- [x] `render/starfield.ts` — 3 offscreen layers, blit with parallax + wrap, per-layer twinkle.
       *Done when:* panning shows clear depth separation and no seams at the wrap.
-- [ ] `render/orbit.ts` — tilted ellipse hairlines, hover brightening.
-- [ ] `render/planet.ts` — lit sphere, rim light, glow, gas banding, cached gradients.
+- [x] `render/orbit.ts` — tilted ellipse hairlines, hover brightening.
+- [x] `render/planet.ts` — lit sphere, rim light, glow, gas banding, cached gradients.
       *Done when:* discs are **circular** (not squashed) and lighting points at the right star.
-- [ ] `render/star.ts` — corona, flare spikes, pulse; Sol warm, Nova cool.
-- [ ] `render/rings.ts` (Saturn, correct occlusion) · `render/belt.ts` (seeded rocks)
-- [ ] `engine/scene.ts` — build from `system.ts`, orbital motion, moon sub-orbits, pause flag.
-- [ ] `render/labels.ts` — HTML overlay, `transform` only, collision-priority thinning.
-- [ ] `engine/picking.ts` — world-space hit-test with `MIN_PICK_PX`, `ViewState` machine.
-- [ ] `engine/input.ts` — drag-pan, cursor-anchored wheel zoom (`{ passive: false }`), touch,
+- [x] `render/star.ts` — corona, flare spikes, pulse; Sol warm, Nova cool.
+- [x] `render/rings.ts` (Saturn, correct occlusion) · `render/belt.ts` (seeded rocks)
+- [x] `engine/scene.ts` — build from `system.ts`, orbital motion, moon sub-orbits, pause flag.
+- [x] `render/labels.ts` — HTML overlay, `transform` only, collision-priority thinning.
+- [x] `engine/picking.ts` — world-space hit-test with `MIN_PICK_PX`, `ViewState` machine.
+- [x] `engine/input.ts` — drag-pan, cursor-anchored wheel zoom (`{ passive: false }`), touch,
       keyboard map from ENGINE_SPEC §3.
 - **Done when:** 60fps at 1440p; zoom into any body and back out with no drift; labels don't
-  jitter; `prefers-reduced-motion` freezes all motion.
+  jitter; `prefers-reduced-motion` freezes all motion. ✅ **Verified** — see the Phase 1 completion
+  note below.
+
+**Phase 1 complete.** `src/types/content.ts` and `src/content/system.ts` (nominally Phase 2, §2
+below) were pulled forward because `engine/scene.ts` needs them to build the scene — see those
+files' header comments and PLAN.md's commit history for the reasoning. One deliberate deviation
+from the ENGINE_SPEC §9 contract: `SceneBody` does not carry `data: Body`, since no Entry content
+exists until Phase 3 and fabricating placeholder content to satisfy the type would violate §0's
+no-invention rules. `engine/scene.ts` and `engine/picking.ts`'s file comments explain the
+decoupling and what Phase 2/3 needs to wire up once real content/moon ids exist. `render/draw.ts`
+(not in the original file list) was added to keep `main.ts` a thin bootstrap rather than growing a
+branching per-body-type render loop inline — it composes the render/*.ts functions PLAN.md and
+ENGINE_SPEC already call for.
+
+Verified end-to-end with headless Playwright against the real dev server: 59–60fps sustained at
+2560×1440 both at the default view and zoomed into Jupiter with all 10 moons rendered; clicking a
+body flies the camera in, Escape flies back to a pixel-identical home framing across repeated
+cycles (no drift); a body's label moves ~0.025px/frame (no jitter); and under emulated
+`prefers-reduced-motion`, the canvas is byte-identical across a 2-second window and camera flights
+snap instantly instead of tweening. A real bug (a negative-radius `ctx.arc()` call that silently
+killed the render loop for any body under 1px on screen — i.e. every moon at the default zoom) was
+found and fixed in the course of this verification.
 
 ### Phase 2 — UI shell, then freeze the schema
 
-- [ ] `types/content.ts` — verbatim from [ENGINE_SPEC §7](docs/ENGINE_SPEC.md#7-the-content-schema)
+- [x] `types/content.ts` — verbatim from [ENGINE_SPEC §7](docs/ENGINE_SPEC.md#7-the-content-schema).
+      **Pulled forward into Phase 1** — engine/scene.ts needed it; see the Phase 1 completion note
+      above. Not yet pressure-tested against real entries, so not "frozen" until the 3 sample
+      entries below are written and checked against it.
 - [ ] `data/registry.ts` — `import.meta.glob` discovery, flat entry map, dev-time duplicate check
 - [ ] `tools/validate-content.ts` — unique ids, `related` resolves, tier completeness,
       system↔content parity
