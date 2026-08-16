@@ -258,6 +258,12 @@ export interface Body {
   (≥2), `facets`, `related` (≥2), and **all four** reference categories with ≥1 entry each.
 - **Tier 2** requires `hook`, `intuition`, `facets`, `related` (≥1), and ≥2 references total.
 
+These are the validator's *array-length minimums*, not the full list of fields a Tier 2 entry
+carries. `howItWorks`, `whenToUse` and `whenNotToUse` are required by the `Entry` type itself on
+every entry regardless of tier, so `tsc` enforces their presence and the validator has nothing
+left to check. A Tier 2 entry is short, not partial — see
+[CONTENT_GUIDE §4 "Tier 2 stubs"](CONTENT_GUIDE.md#tier-2-stubs) for what to write in them.
+
 `src/content/system.ts` holds *placement*, separate from pedagogy:
 
 ```ts

@@ -206,6 +206,40 @@ from a source and which came from fluency.
 5. **Check the specifics against what you read**: year, authors, complexity, hyperparameter
    names and defaults, and any historical or lineage claim.
 
+### ⚠️ PDFs: `WebFetch` will invent specifics rather than admit it failed
+
+**This is the one fabrication route that survives the research-first rule, so read it before
+citing any paper.**
+
+`WebFetch` does not hand you the document. It converts the page and answers your prompt using a
+small fast model. When the target is a PDF with no extractable text layer — a scan, a
+fax-encoded TR, a compressed stream — that model receives little or nothing useful, and it does
+not reliably say so. It answers anyway, in the same confident register as a successful fetch.
+
+This was caught during Phase 3 batch 1. Fetching Friedman's gradient boosting paper returned
+specific, plausible, correctly-formatted hyperparameter guidance — a shrinkage range and a tree
+depth — that **do not appear anywhere in the actual paper.** Nothing about the response
+distinguished it from a real read. Had it been trusted, two invented numbers would have shipped
+inside an entry whose citation was genuine, which is precisely the failure mode this whole
+section exists to prevent: real paper, real DOI, invented content.
+
+**The rule:** a `WebFetch` summary of a PDF is a *lead*, never a source.
+
+- **Prefer HTML.** The arXiv `/abs/` page, the journal landing page, the author's own HTML
+  version, or the library's documentation. Use these for title, authors and year — they are
+  reliable and they are most of what you cite.
+- **To quote a number from a PDF, extract its text yourself** and confirm the number appears in
+  the extracted text. If it does not, you did not read it.
+- **If a PDF will not yield text, treat the claim as unsourced** and apply "If you cannot source
+  it" below. Scanned papers are common among pre-2000 technical reports — expect this.
+- **Verify a DOI through metadata, not the publisher.** `https://api.crossref.org/works/<doi>`
+  returns title, authors and year as structured data, and works when the publisher blocks
+  automated access. A 403 from Wiley, Springer, ACM or IEEE means the fetch was refused, **not**
+  that the DOI is bad — do not drop a citation on that evidence alone.
+
+The tell is confidence without traceability: if you cannot point at the sentence you got a
+number from, you do not have the number.
+
 ### What must be sourced
 
 Anything a reader could be misled by:
@@ -251,11 +285,33 @@ will not be caught by any tool in this repo.
 
 ### Tier 2 stubs
 
-A Tier 2 entry is a real, short entry — not a placeholder. It needs `hook`, `intuition`,
-`facets`, ≥1 `related`, and ≥2 references. Skip `howItWorks`, `math`, `code` and
-`hyperparameters`. A good Tier 2 entry tells the reader what the thing is, how it differs from
-the Tier 1 entry next to it, and where to read more. If you cannot manage that, leave it out and
-report it rather than writing filler.
+A Tier 2 entry is a real, short entry — not a placeholder. A good one tells the reader what the
+thing is, how it differs from the Tier 1 entry next to it, and where to read more. If you cannot
+manage that, leave it out and report it rather than writing filler.
+
+**What Tier 2 must contain.** `types/content.ts` is frozen, and only five fields on `Entry` are
+optional. Everything else — including `howItWorks`, `whenToUse` and `whenNotToUse` — is
+**required on every entry regardless of tier**, and `tsc` rejects an entry missing any of them.
+So a Tier 2 stub is *short*, not *partial*. Only four fields actually get skipped:
+
+| Field | Tier 2 |
+|---|---|
+| `id`, `name`, `tier`, `year`, `difficulty` | Required. Same as Tier 1. |
+| `hook`, `intuition`, `facets` | Required, at full quality. Same bar as Tier 1 — these carry the entry. |
+| `howItWorks` | Required. One-sentence `summary` + ~3 brief `steps`. |
+| `whenToUse` / `whenNotToUse` | Required. 2 each, meeting the §1 concreteness bar. |
+| `related` | Required. ≥1 (Tier 1 needs ≥2). |
+| `references` | Required. ≥2 in total across any categories (Tier 1 needs all four categories). |
+| `aliases` | Optional — include it whenever the thing has a real second name. Most Tier 2 entries do. |
+| `math`, `code`, `hyperparameters`, `complexity` | Optional — **these are the four you skip.** |
+
+This was settled during Phase 3 batch 1 (mercury/venus/terra/mars) and every entry from that
+batch onward follows it. **Write short real content for the required fields — never filler to
+satisfy the compiler.** If an algorithm does not warrant three honest steps and two honest
+conditions, it does not warrant an entry; leave it out and report it. The alternative considered
+and rejected was unfreezing the schema to make those three fields optional: that would ripple
+through `ui/card.ts`, the validator, and the Phase 4 advisor, which reads `whenToUse` as its only
+source of truth and would silently lose every Tier 2 entry from its ranking.
 
 ---
 

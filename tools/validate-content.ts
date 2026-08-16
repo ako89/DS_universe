@@ -19,7 +19,7 @@
 
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { system } from '../src/content/system.ts';
 import type { Body, Entry } from '../src/types/content.ts';
@@ -103,7 +103,9 @@ async function main(): Promise<void> {
 
   for (const filename of filenames) {
     const file = `src/content/bodies/${filename}`;
-    const mod = (await import(path.join(bodiesDir, filename))) as { body?: Body };
+    // pathToFileURL, not the bare path: on Windows a "C:\..." absolute path is rejected by the
+    // ESM loader as an unsupported "c:" URL scheme.
+    const mod = (await import(pathToFileURL(path.join(bodiesDir, filename)).href)) as { body?: Body };
     if (!mod.body) {
       fail(file, 'does not export `body`');
       continue;
