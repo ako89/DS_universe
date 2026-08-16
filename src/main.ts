@@ -16,6 +16,7 @@ import { drawPlanet } from './render/planet.ts';
 import { drawStar } from './render/star.ts';
 import { drawRingsBack, drawRingsFront } from './render/rings.ts';
 import { drawBelt } from './render/belt.ts';
+import { createLabelLayer } from './render/labels.ts';
 
 function mustFind<T extends Element>(selector: string): T {
   const el = document.querySelector<T>(selector);
@@ -24,6 +25,7 @@ function mustFind<T extends Element>(selector: string): T {
 }
 
 const canvas = mustFind<HTMLCanvasElement>('#scene');
+const overlay = mustFind<HTMLDivElement>('#overlay');
 const { ctx, vw, vh, onResize } = createCanvas(canvas);
 
 const camera = new Camera(vw, vh);
@@ -33,6 +35,7 @@ onResize((newVw, newVh) => {
 });
 
 const starfield = createStarfield();
+const labels = createLabelLayer(overlay);
 const bodies = buildScene();
 const paused = false; // Phase 5 wires prefers-reduced-motion and card-open into this.
 
@@ -83,6 +86,17 @@ startLoop((dt, t) => {
       drawPlanet(ctx, camera, planetVisual, false, t);
     }
   }
+
+  labels.update(
+    camera,
+    bodies.map((body) => ({
+      id: body.id,
+      name: body.name,
+      wx: body.wx,
+      wy: body.wy,
+      priority: body.type === 'star' ? 1000 : body.radius,
+    })),
+  );
 });
 
 // Remaining Phase 1 wiring goes here as modules land:
