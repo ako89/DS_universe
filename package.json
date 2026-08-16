@@ -1,0 +1,26 @@
+{
+  "name": "ds-universe",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An explorable map of the data science algorithm universe, rendered as a solar system.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "validate": "node tools/validate-content.ts",
+    "check-links": "node tools/check-links.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "katex": "^0.18.4"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.8",
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

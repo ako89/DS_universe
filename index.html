@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>DS Universe — a map of the data science algorithm space</title>
+    <meta
+      name="description"
+      content="An explorable map of the data science algorithm universe, from linear regression to large language models."
+    />
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <!--
+      The canvas is the scene. Everything else is an HTML overlay positioned on top of it.
+      Body labels live in #overlay (see docs/ENGINE_SPEC.md §4.2 — labels are HTML, never
+      ctx.fillText, so they stay crisp at any DPR and reach the accessibility tree).
+    -->
+    <canvas id="scene" aria-hidden="true"></canvas>
+
+    <!-- Text alternative to the canvas for screen readers. Populated in Phase 5. -->
+    <div id="a11y-summary" class="visually-hidden" role="region" aria-label="Map contents"></div>
+
+    <div id="overlay"></div>
+    <div id="card" role="complementary" aria-label="Algorithm detail"></div>
+    <div id="modal" role="dialog" aria-modal="true" aria-label="Search and advisor" hidden></div>
+
+    <noscript>
+      <p style="color: #e6e8f0; font: 16px/1.6 system-ui; padding: 2rem; max-width: 60ch">
+        DS Universe is an interactive map and needs JavaScript to run. The underlying content —
+        every algorithm, its explanation and its references — lives in
+        <code>src/content/bodies/</code> in the repository if you would rather read the source.
+      </p>
+    </noscript>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
