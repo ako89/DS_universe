@@ -103,7 +103,8 @@ You are writing one content module for the DS Universe project.
 Repo: C:\Users\akoda\Projects\DS_universe
 
 READ FIRST, in this order:
-  1. docs/CONTENT_GUIDE.md   — register, length targets, the gold-standard entry, vetted sources
+  1. docs/CONTENT_GUIDE.md   — register, length targets, the gold-standard entry, the
+                               research-first workflow (§3), vetted sources (§5)
   2. docs/ENGINE_SPEC.md §7  — the Entry/Body schema
   3. PLAN.md §3              — find the "JUPITER" section for your assigned moon list
   4. src/types/content.ts    — the authoritative types
@@ -114,15 +115,33 @@ Create src/content/bodies/JUPITER.ts exporting a `Body` object with one `Entry` 
 listed for that body in PLAN.md §3. Write each at the tier marked there:
   ★ = Tier 1 (full entry)   unmarked = Tier 2 (stub: hook, intuition, facets, related, 2 refs)
 
+RESEARCH FIRST — THIS IS THE CORE REQUIREMENT
+Every entry is written from sources, not from recall. For each algorithm, in this order:
+  1. Search for it by name, and for its original paper if it has one.
+  2. Open a real source — the paper, a canonical text from CONTENT_GUIDE §5, or the library's
+     own documentation.
+  3. Open every reference URL before citing it. Never cite a link you have not loaded.
+  4. Then write, in your own words.
+  5. Check the specifics against what you read: year, authors, complexity, hyperparameter
+     names and defaults, historical and lineage claims.
+Do NOT draft from memory and search afterwards to confirm. That inverts the process into
+hunting for support for text you already committed to, and the errors that survive it are the
+confident, specific, subtly-wrong ones.
+This applies to ALL entries, including algorithms you are certain you know. No exceptions.
+If you do not have web search and fetch tools available, stop and say so — you cannot do this
+task correctly without them.
+
 HARD RULES
 - Edit ONLY src/content/bodies/JUPITER.ts. Do not touch types, system.ts, registry.ts,
   engine/, ui/, or any other body file. If you think one needs changing, say so and stop.
 - Do not commit. Do not run git.
-- Never invent a URL, DOI, arXiv ID, or YouTube video ID. Use the vetted sources in
-  CONTENT_GUIDE §4, or a link you have verified. For video, link a channel — never guess a
-  video ID. An invented citation is worse than no citation; omit rather than guess.
-- Never write placeholder text. If you cannot write a real entry, leave it out and report
-  which ones you skipped and why.
+- Never invent anything. Not a URL, DOI, arXiv ID or YouTube video ID — and equally not a
+  year, an author, a complexity bound, a hyperparameter default, or a historical claim.
+  Use the vetted sources in CONTENT_GUIDE §5 or a link you have opened. For video, link a
+  channel — never guess a video ID. A fabricated detail is worse than an absent one, because
+  nothing distinguishes it from a real one.
+- Never write placeholder text. If you cannot source an entry, leave it out and report which
+  ones you skipped and what you searched for.
 - Match the gold-standard DBSCAN entry in CONTENT_GUIDE §2 for structure, length and register.
 - `whenToUse` / `whenNotToUse` must be concrete, checkable conditions. They are the advisor's
   only source of truth. "When you need good performance" is a failure; "Clusters are
@@ -133,8 +152,9 @@ HARD RULES
 BEFORE YOU REPORT DONE
 - Run: npm run build      (must typecheck clean)
 - Run: npm run validate   (must exit 0, if the script exists yet)
-Report: entries written, entries skipped and why, any references you were unsure about,
-and anything the schema could not express.
+Report: entries written; entries skipped and what you searched for; the sources you actually
+opened; any claim you could not verify and therefore left out; anything the schema could not
+express.
 ```
 
 ---
@@ -179,6 +199,13 @@ Then read, don't skim:
       swapped without anyone noticing, they aren't distinguishing anything.
 - [ ] **Sample the references.** Open two or three per body. This is the highest-risk area —
       a fabricated arXiv ID looks completely authentic.
+- [ ] **Check the agent reported which sources it opened.** The brief requires it. An agent that
+      cannot name what it read probably wrote from recall, and the entries need re-checking
+      rather than skimming — recalled content fails silently and looks exactly like sourced
+      content.
+- [ ] **Spot-check the specifics** on two entries per body: year, complexity bound,
+      hyperparameter defaults. These are where recall degrades first, and where a wrong answer
+      is most quietly authoritative.
 - [ ] **Check `whenToUse` against the bar** in CONTENT_GUIDE §1. Vague entries silently degrade
       the advisor, and you won't notice until Phase 4 gives bad answers.
 
@@ -230,7 +257,8 @@ Seven batch PRs is the right granularity. Twenty-seven, one per body, would be m
 |---|---|
 | Two agents both create an entry id like `attention` | `tools/validate-content.ts` fails on duplicate ids. Run it after every batch. |
 | Voice drifts between bodies | The gold-standard entry, plus reading each body's hooks as a set. |
-| Fabricated citations | The brief's hard rule, plus `npm run check-links`. Assume this *will* happen and check. |
+| Fabricated citations | The research-first rule (open every URL before citing), the brief's hard rule, plus `npm run check-links`. Assume this *will* be attempted and check. |
+| Content written from recall instead of sources | The brief requires reporting which sources were opened. `check-links` catches bad URLs but **cannot** catch a confidently wrong complexity bound or date — spot-check specifics yourself. |
 | Schema drift | `types/content.ts` is frozen at end of Phase 2 and `tsc` rejects violations. Agents cannot quietly extend it. |
 | Merge conflicts | Structurally impossible if the one-file-per-agent rule holds. |
 | Cross-links pointing nowhere | The validator resolves every `related` id. Expect failures in early batches, since later bodies don't exist yet — fix in a final cross-link pass. |
@@ -282,10 +310,19 @@ away. They tell you something needs attention; you still approve in the app. So 
 Each agent starts with an empty context and re-reads the two guides — roughly 6–8k tokens of
 reading before it writes anything. Four agents per batch, seven batches, is ~28 cold starts.
 
-That's the real trade: you're spending tokens to buy wall-clock time. For Phase 3 it's clearly
-worth it — the work is genuinely independent and there's a lot of it. For Phase 1 it would be
-pure waste, because the agents would spend their context re-deriving an architecture that has to
-be consistent anyway.
+**Research-first dominates this cost.** Each entry involves searching and opening at least one
+real source, so an eight-moon body means dozens of fetches on top of the writing. Expect a body
+to take several times longer than it would from recall, and budget accordingly — a batch is a
+step-away-and-come-back operation, not something you watch.
+
+That is the trade being made deliberately: the project's value rests on a reader being able to
+trust what a card says and click a reference that actually exists. Content generated from recall
+is faster and reads just as well, which is precisely the problem — nothing downstream would
+catch it. `check-links` finds a dead URL; nothing finds a confidently wrong complexity bound.
+
+Parallelism is what makes this affordable in wall-clock terms. That's the case for running four
+agents on Phase 3 and none on Phase 1: content is slow, independent, and verifiable, while
+engine work is fast, interdependent, and needs one consistent architecture.
 
 ---
 

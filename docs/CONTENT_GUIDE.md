@@ -173,14 +173,74 @@ LaTeX in words.
 
 ---
 
-## 3. Authoring workflow per body
+## 3. Research-first authoring
+
+**Every entry is written from sources, not from recall — all 222 of them, with no exceptions for
+algorithms you are confident you know.**
+
+### The order matters
+
+Search → read → write. Not write → search → confirm.
+
+The second order feels equivalent and isn't. Once you have drafted a paragraph, you go looking
+for support for what you already said, and you find it, because for any plausible claim about a
+well-known algorithm there is usually *something* that looks like corroboration. The errors that
+survive that process are the confident, specific, subtly-wrong ones — a complexity bound that
+applies to a different variant, a default that changed three library versions ago, a date that
+belongs to the follow-up paper rather than the original.
+
+Searching first costs a few minutes per entry. Fixing this class of error after 200 entries have
+shipped costs a rewrite you cannot scope, because you cannot tell by reading which claims came
+from a source and which came from fluency.
+
+### Per entry
+
+1. **Search for the algorithm** by name, plus its original paper if it has one.
+2. **Open a real source.** The original paper, the relevant chapter of a canonical text from §5,
+   or the library's own documentation. Prefer primary sources for claims of fact (who, when,
+   what the method actually does) and documentation for practical claims (defaults, behaviour).
+3. **Verify every reference URL by opening it.** Do not cite a link you have not loaded. This is
+   where fabrication is most likely and most damaging.
+4. **Then write**, in your own words. You are explaining what you just read, not paraphrasing it
+   line by line — the register in §1 still applies, and a source does not license dense prose.
+5. **Check the specifics against what you read**: year, authors, complexity, hyperparameter
+   names and defaults, and any historical or lineage claim.
+
+### What must be sourced
+
+Anything a reader could be misled by:
+
+| Claim type | Example |
+|---|---|
+| Dates and attribution | `year: 1996`, "introduced by Ester et al." |
+| Complexity | `'O(n log n) with a spatial index'` |
+| Hyperparameter names and defaults | `min_samples`, "start at 2 × n_features" |
+| Historical and lineage claims | "the direct ancestor of the transformer" |
+| Every reference | title, URL, publication year |
+
+Mechanism prose — how the algorithm actually works — is sourced too, but you are reading to get
+it right rather than to quote. That is the field where good writing matters most and copying
+helps least.
+
+### If you cannot source it
+
+**Leave it out. Do not fill the gap with plausible prose.** Omit the field if it is optional,
+omit the entry if it is not, and report which ones you skipped and what you searched for. An
+absent entry is a visible, fixable gap; an invented one is indistinguishable from a real one and
+will not be caught by any tool in this repo.
+
+---
+
+## 4. Authoring workflow per body
 
 1. Read the moon list for that body in [PLAN.md §3](../PLAN.md#3-the-taxonomy). Write every one
    at its marked tier.
 2. **Write every `hook` first.** Doing all of them up front forces you to articulate what
    distinguishes each algorithm from its neighbours, which is exactly what stops entries blurring
-   into each other.
-3. Then full entries, working through fields in schema order.
+   into each other. Hooks are claims about behaviour, so they are sourced like everything else —
+   if you cannot say what a method does without guessing, research it before writing the hook.
+3. Then full entries, one at a time, **running the §3 research loop for each** — search, open a
+   real source, verify the URLs, then write. Work through fields in schema order.
 4. Fill `related` with real ids. Prefer at least one **cross-body** link — HNSW → RAG crosses
    Venus to Athenaeum; PPO → RLHF crosses Odyssey to Forge; attention → seq2seq crosses Nova back
    to Echo. These links are what make the map feel like a map rather than 27 separate lists.
@@ -199,7 +259,7 @@ report it rather than writing filler.
 
 ---
 
-## 4. Vetted reference sources
+## 5. Vetted reference sources
 
 Prefer these. Anything outside this list must be verified before use.
 
@@ -254,7 +314,7 @@ Hyndman & Athanasopoulos, *Forecasting: Principles and Practice*.
 
 ---
 
-## 5. Writing the maths
+## 6. Writing the maths
 
 `math.latex` is rendered by KaTeX. Two things to watch:
 

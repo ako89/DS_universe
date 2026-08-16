@@ -51,12 +51,16 @@ values and the compiler catches a typo'd tag or a missing field as you write.
 
 1. Open the relevant body module in `src/content/bodies/` — for example `jupiter.ts` for
    clustering methods.
-2. Add an entry to its `moons` array, following the schema in
+2. **Research it before writing it.** Search for the algorithm, open a real source — the original
+   paper, a canonical text, or the library's own documentation — and open every reference URL
+   before citing it. Entries are written from sources, not from recall. See
+   [CONTENT_GUIDE §3](docs/CONTENT_GUIDE.md#3-research-first-authoring).
+3. Add an entry to its `moons` array, following the schema in
    [ENGINE_SPEC §7](docs/ENGINE_SPEC.md#7-the-content-schema) and the gold-standard example in
    [CONTENT_GUIDE §2](docs/CONTENT_GUIDE.md#2-gold-standard-entry--match-this).
-3. Point `related` at real entry ids elsewhere in the map — cross-body links especially.
-4. Run `npm run validate` and `npm run check-links`.
-5. Run `npm run dev` and read the card on screen. Prose that reads fine in an editor is often too
+4. Point `related` at real entry ids elsewhere in the map — cross-body links especially.
+5. Run `npm run validate` and `npm run check-links`.
+6. Run `npm run dev` and read the card on screen. Prose that reads fine in an editor is often too
    long in a 480px panel.
 
 Adding a whole new *body* means a new module in `src/content/bodies/` plus an entry in
@@ -71,11 +75,19 @@ problem-to-algorithm advisor both run in the browser against content bundled at 
 
 ## A note on references
 
-Every citation in this project should be real and reachable. `npm run check-links` exists to
-enforce that, and it runs in CI before deploy. If you are adding references, prefer the vetted
-sources in [CONTENT_GUIDE §4](docs/CONTENT_GUIDE.md#4-vetted-reference-sources), and never guess
-at an identifier — an invented arXiv ID or YouTube link looks entirely authentic, which is
-exactly what makes it worse than no citation at all.
+Content here is written from sources, not from recall — every entry is researched as it is
+written, and every reference URL is opened before it is cited. Prefer the vetted sources in
+[CONTENT_GUIDE §5](docs/CONTENT_GUIDE.md#5-vetted-reference-sources).
+
+Nothing factual is invented: not a date, an author, a complexity bound, a hyperparameter default,
+or a link. If something cannot be sourced it is left out and reported, never filled in with
+plausible prose.
+
+`npm run check-links` enforces the part that can be automated and runs in CI before deploy. It is
+worth being clear about its limit: it catches a dead URL, but it cannot catch a confidently wrong
+complexity bound or a date that belongs to the follow-up paper. Those pass every check in this
+repo except a person reading them against a source — which is why the research happens up front
+rather than as verification afterwards.
 
 ## Development notes
 

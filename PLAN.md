@@ -56,15 +56,24 @@ to unwind later.
 
 ### Content
 
-13. **Never invent a URL, DOI, arXiv ID, or YouTube video ID.** The highest-risk failure mode in
-    this project. Use only the vetted sources in
-    [CONTENT_GUIDE §4](docs/CONTENT_GUIDE.md#4-vetted-reference-sources), or a URL you have
-    actually verified. **Never guess a YouTube video ID** — link a channel or playlist instead.
-    A fabricated citation is worse than no citation.
-14. **Never write placeholder content.** No `intuition: 'TODO'`, no lorem ipsum, no "this
+13. **Research first — write from sources, not from recall.** Every Phase 3 entry is built from
+    web and reference searches performed *while writing it*, with no exceptions, including
+    algorithms you are confident you know. Look it up, read the primary source or a canonical
+    text, then write. Do not draft from memory and search afterwards to confirm — that inverts
+    the process into hunting for support for text you have already committed to, which is
+    exactly the failure this rule exists to prevent. Workflow in
+    [CONTENT_GUIDE §3](docs/CONTENT_GUIDE.md#3-research-first-authoring).
+14. **Never invent anything.** No invented URL, DOI, arXiv ID, or YouTube video ID — and equally
+    no invented year, author, complexity bound, hyperparameter default, or historical claim.
+    Use the vetted sources in
+    [CONTENT_GUIDE §5](docs/CONTENT_GUIDE.md#5-vetted-reference-sources) or something you have
+    actually opened. **Never guess a YouTube video ID** — link a channel or playlist instead.
+    A fabricated detail is worse than an absent one, because nothing distinguishes it from a
+    real one.
+15. **Never write placeholder content.** No `intuition: 'TODO'`, no lorem ipsum, no "this
     algorithm is used for various tasks". If you cannot write a real entry, leave it out and say
     which ones you skipped.
-15. **Follow the gold-standard entry** in
+16. **Follow the gold-standard entry** in
     [CONTENT_GUIDE §2](docs/CONTENT_GUIDE.md#2-gold-standard-entry--match-this) exactly for
     structure, length and register. It is calibrated. Match it.
 
@@ -361,6 +370,15 @@ Each item ends with: run `npm run dev` and confirm on screen.
 
 ### Phase 3 — Content (the long pole)
 
+> **Every entry in this phase is written from sources, not from recall.** Search for the
+> algorithm, read a primary source or canonical text, then write — for all 222 entries, with no
+> exceptions for ones you are confident you know. Nothing factual gets invented: not a year, not
+> an author, not a complexity bound, not a hyperparameter default, not a URL. If it cannot be
+> sourced, leave it out and report it (§0 rules 13–15).
+>
+> **This means content agents need web search and fetch tools available.** An agent without them
+> cannot do this phase correctly — check before launching a batch.
+
 Read [CONTENT_GUIDE](docs/CONTENT_GUIDE.md) first. One checkbox = every moon in that body written
 at its §3 tier, with `npm run validate` clean.
 
@@ -452,8 +470,11 @@ GitHub Pages is **already enabled** — do not reconfigure it.
 - **"When to use / when it fails" is the advisor's entire source of truth.** Concrete conditions,
   never platitudes. Re-read [CONTENT_GUIDE §1](docs/CONTENT_GUIDE.md#1-register-and-length)
   before writing any body.
-- **Never invent a citation.** Never guess a YouTube video ID. Run `npm run check-links` before
-  deploying.
+- **Phase 3 is research-first.** Every entry is written from sources, not recall — search, open a
+  real source, verify each URL, then write. Never invent a citation, a date, a complexity bound
+  or a default. Never guess a YouTube video ID. Run `npm run check-links` before deploying, and
+  remember it only catches dead links — a confidently wrong fact passes every check in this repo
+  except a human reading it.
 - **Content parallelizes; engine does not.** Multiple agents can each own a body module safely.
   Two agents in `engine/` at once will conflict. If you are running several agents, read
   [docs/ORCHESTRATION.md](docs/ORCHESTRATION.md) first — it has the agent brief and batch plan.
