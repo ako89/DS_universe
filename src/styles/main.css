@@ -1,0 +1,98 @@
+/* Base layout and reset. Component styles live in card.css / overlay.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* the canvas is the viewport; the page itself never scrolls */
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* The scene fills the viewport. Sized in CSS pixels; canvas.ts handles the DPR backing store. */
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none; /* we handle pan/pinch ourselves */
+  cursor: grab;
+}
+
+#scene.is-dragging {
+  cursor: grabbing;
+}
+
+#scene.is-over-body {
+  cursor: pointer;
+}
+
+/* Label layer. Pointer events are enabled per-label, not on the container, so drags
+   started over empty space still reach the canvas. */
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+#card {
+  position: fixed;
+  z-index: var(--z-card);
+}
+
+#modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+}
+
+#modal[hidden] {
+  display: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Dev-only frame counter, toggled with D. */
+#fps {
+  position: fixed;
+  bottom: var(--s-3);
+  left: var(--s-3);
+  z-index: var(--z-modal);
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
