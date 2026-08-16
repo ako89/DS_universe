@@ -14,6 +14,8 @@ import { createStarfield } from './render/starfield.ts';
 import { drawOrbit } from './render/orbit.ts';
 import { drawPlanet } from './render/planet.ts';
 import { drawStar } from './render/star.ts';
+import { drawRingsBack, drawRingsFront } from './render/rings.ts';
+import { drawBelt } from './render/belt.ts';
 import { system } from './content/system.ts';
 import { TILT } from './engine/constants.ts';
 
@@ -55,23 +57,39 @@ startLoop((dt, t) => {
     const star = starById.get(body.litBy);
     if (!star) continue;
     drawOrbit(ctx, camera, star.at[0], star.at[1], body.orbitRadius, false);
+
+    if (body.type === 'belt') {
+      drawBelt(ctx, camera, {
+        id: body.id,
+        wx: star.at[0],
+        wy: star.at[1],
+        orbitRadius: body.orbitRadius,
+        hue: body.hue,
+        rockCount: body.rockCount ?? 0,
+      });
+      continue;
+    }
+
     const theta = body.phase * Math.PI * 2;
     const pos = tempOrbitPos(star.at[0], star.at[1], body.orbitRadius, theta);
-    drawPlanet(
-      ctx,
-      camera,
-      {
-        id: body.id,
-        wx: pos.wx,
-        wy: pos.wy,
-        radius: body.radius,
-        hue: body.hue,
-        litByPos: { wx: star.at[0], wy: star.at[1] },
-        gasGiant: body.id === 'jupiter' || body.id === 'genesis',
-      },
-      false,
-      t,
-    );
+    const planetVisual = {
+      id: body.id,
+      wx: pos.wx,
+      wy: pos.wy,
+      radius: body.radius,
+      hue: body.hue,
+      litByPos: { wx: star.at[0], wy: star.at[1] },
+      gasGiant: body.id === 'jupiter' || body.id === 'genesis',
+    };
+
+    if (body.id === 'saturn') {
+      const ring = { wx: pos.wx, wy: pos.wy, radius: body.radius, hue: body.hue };
+      drawRingsBack(ctx, camera, ring);
+      drawPlanet(ctx, camera, planetVisual, false, t);
+      drawRingsFront(ctx, camera, ring);
+    } else {
+      drawPlanet(ctx, camera, planetVisual, false, t);
+    }
   }
 });
 
