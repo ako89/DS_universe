@@ -11,14 +11,16 @@
  * registry.ts separately, not through SceneBody.
  *
  * Moons are real in count (system.ts's moonCount is the actual count published in PLAN.md §3)
- * but placeholder in geometry: no names, no content, just orbiting dots, so the "moon sub-orbits"
- * capability this file owns is demonstrable before Phase 3 content exists. Phase 2/3 can replace
- * SceneMoon's geometry-only shape with real per-moon ids once Entry content exists, without
- * touching buildScene/updateScene's orbital mechanics.
+ * but placeholder in geometry: no names, just orbiting dots. Where a body's content module
+ * exists (src/data/registry.ts), the first N moon slots pick up that module's real Entry ids, in
+ * declaration order — see `id` below — so picking.ts has something honest to resolve. Slots
+ * beyond the written moons stay anonymous (`id: undefined`) rather than inventing placeholder
+ * content, per PLAN.md §0's no-invention rule; they become real once Phase 3 writes that moon.
  */
 
 import { system } from '../content/system.ts';
 import type { BodyPlacement } from '../content/system.ts';
+import { bodies as contentBodies } from '../data/registry.ts';
 import { BASE_PERIOD_S, MOON_BASE_PERIOD_S, TILT } from './constants.ts';
 import { hashSeed, mulberry32 } from './rng.ts';
 
@@ -30,6 +32,9 @@ export interface SceneMoon {
   orbitRadius: number;
   theta: number;
   speed: number;
+  /** The real Entry id this moon renders, if its content has been written yet. Absent moons are
+   *  visual-only: picking.ts skips them rather than opening a card with nothing to show. */
+  id?: string;
 }
 
 export interface SceneBody {
@@ -76,11 +81,15 @@ function buildMoons(parentId: string, centerX: number, centerY: number, parentRa
   if (count <= 0) return [];
   const rand = mulberry32(hashSeed(parentId));
   const innermost = parentRadius * 2.4;
+  // In declaration order, so moon slot i renders content/bodies/<parentId>.ts's i-th moon, once
+  // that module exists. Bodies with no content module yet (Phase 3 hasn't reached them) get [].
+  const entryIds = contentBodies.get(parentId)?.moons.map((m) => m.id) ?? [];
 
   return Array.from({ length: count }, (_, i) => {
     const orbitRadius = parentRadius * (2.4 + i * 0.9);
     const theta = rand() * Math.PI * 2;
     const pos = orbitPos(centerX, centerY, orbitRadius, theta);
+    const entryId = entryIds[i];
     return {
       index: i,
       wx: pos.wx,
@@ -89,6 +98,7 @@ function buildMoons(parentId: string, centerX: number, centerY: number, parentRa
       orbitRadius,
       theta,
       speed: moonAngularSpeed(orbitRadius, innermost),
+      ...(entryId !== undefined ? { id: entryId } : {}),
     };
   });
 }

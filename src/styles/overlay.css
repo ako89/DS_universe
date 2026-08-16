@@ -1,0 +1,156 @@
+/* Hover tooltip, breadcrumb and help overlay. Card styles live in card.css. */
+
+.tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-tooltip);
+  max-width: 280px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+  background: var(--bg-raised);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.tooltip[hidden] {
+  display: none;
+}
+
+.tooltip-title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tooltip-hook {
+  margin-top: var(--s-1);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  line-height: var(--lh-body);
+}
+
+.tooltip-meta {
+  margin-top: var(--s-1);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+/* Breadcrumb, top-left. Each segment is a real button so it's keyboard-reachable. */
+.breadcrumb {
+  position: fixed;
+  top: var(--s-4);
+  left: var(--s-4);
+  z-index: var(--z-overlay);
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--fs-sm);
+}
+
+.breadcrumb-item {
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  cursor: pointer;
+}
+
+.breadcrumb-item:hover,
+.breadcrumb-item:focus-visible {
+  color: var(--text);
+  background: var(--hairline);
+}
+
+.breadcrumb-item[aria-current='page'] {
+  color: var(--text);
+  cursor: default;
+}
+
+.breadcrumb-sep {
+  color: var(--text-faint);
+}
+
+/* Help overlay ("?"). Full-screen scrim with a centered panel listing the keyboard map. */
+.help-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 4, 10, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.help-scrim[hidden] {
+  display: none;
+}
+
+.help-panel {
+  width: min(480px, 90vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: var(--s-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-raised);
+  backdrop-filter: blur(20px);
+}
+
+.help-panel h2 {
+  margin: 0 0 var(--s-5);
+  font-size: var(--fs-xl);
+  color: var(--text);
+}
+
+.help-panel dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-3) var(--s-4);
+  margin: 0;
+}
+
+.help-panel dt {
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--radius-sm);
+  background: var(--hairline);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  justify-self: start;
+}
+
+.help-panel dd {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  align-self: center;
+}
+
+.help-close {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.help-close:hover,
+.help-close:focus-visible {
+  color: var(--text);
+  background: var(--hairline);
+}

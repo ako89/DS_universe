@@ -8,9 +8,13 @@ Each major segment of the field is a planetary body. Hover for a one-line hook; 
 reveal the individual algorithms as moons, and open a card that goes as deep as you want: plain
 intuition first, the maths behind a fold, and links to real books, papers and lectures.
 
-> **Status: early.** Phases 0–1 (scaffold, engine) are complete — the orrery renders, animates,
-> and is fully navigable (pan/zoom/click/keyboard/touch). Content, search, and the UI chrome
-> (cards, tooltips) are not built yet. See [PLAN.md](PLAN.md) for the phase checklist.
+> **Status: early.** Phases 0–2 (scaffold, engine, UI shell) are complete — the orrery renders,
+> animates, and is fully navigable (pan/zoom/click/keyboard/touch); hovering a body or a written
+> moon shows a tooltip, clicking a moon opens the full detail card (math, code, references,
+> cross-links), and the schema is frozen. Only 3 algorithms are written so far
+> (`linear-regression`, `dbscan`, `self-attention`) — the other ~219 are Phase 3, the long pole.
+> Search and the problem→algorithm advisor are not built yet. See [PLAN.md](PLAN.md) for the
+> phase checklist.
 
 ## Running it
 

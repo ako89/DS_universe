@@ -2,11 +2,19 @@
  * The content schema. Single source of truth for every algorithm entry and its placement.
  * Verbatim from docs/ENGINE_SPEC.md §7 — do not diverge from that spec without updating both.
  *
- * Pulled forward into Phase 1 (ahead of its PLAN.md Phase 2 checkbox) because engine/scene.ts
- * needs the `Body` type to type its SceneBody.data field, and content/system.ts needs `Body`'s
- * shape to describe placement. No entries exist yet — Phase 3 writes those. This file is not
- * "frozen" until PLAN.md Phase 2 says so (after the 3 pressure-test entries); until then treat
- * it as still open to the schema changes Phase 2 is expected to pressure-test.
+ * FROZEN as of PLAN.md Phase 2, pressure-tested against three real entries spanning a simple
+ * closed-form method (linear-regression), a mid-complexity construction (dbscan) and a modern
+ * building block attached to a star rather than a planet (self-attention) — see
+ * src/content/bodies/{mercury,jupiter,nova}.ts. No field changes were needed; every entry fit
+ * the schema as specified. Any change after this point needs the user's sign-off first (PLAN.md
+ * §0 rule "the schema doesn't fit an entry you're writing → ask before extending it").
+ *
+ * One gap surfaced, deliberately left unfixed here: ENGINE_SPEC §4.0's card header wants a
+ * "supervised/unsupervised" chip, and `Facets.task` doesn't map onto that binary for every task
+ * value (representation, generation, retrieval, ranking, control, inference are genuinely
+ * ambiguous). Adding a field per PLAN.md §0 rule 14 would mean *asserting* it for every future
+ * entry, including ones where it's not a clean yes/no — a worse failure mode than a UI that
+ * derives the chip only when it's unambiguous and omits it otherwise. See src/ui/card-sections.ts.
  */
 
 export type Task =
