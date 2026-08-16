@@ -103,7 +103,9 @@ function drawGasBands(ctx: CanvasRenderingContext2D, r: number, hue: number, noi
 function drawRimLight(ctx: CanvasRenderingContext2D, r: number): void {
   ctx.beginPath();
   // Local +x points at the star (see file comment), so the lit limb is centered on angle 0.
-  ctx.arc(0, 0, r - 1, -Math.PI / 3, Math.PI / 3);
+  // r - 1 can go negative for a body whose screen radius is under 1px (e.g. a distant moon) —
+  // arc() throws on a negative radius, so floor it at 0.
+  ctx.arc(0, 0, Math.max(0, r - 1), -Math.PI / 3, Math.PI / 3);
   ctx.strokeStyle = `rgba(255, 255, 255, ${RIM_ALPHA})`;
   ctx.lineWidth = 2;
   ctx.stroke();

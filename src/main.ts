@@ -34,7 +34,15 @@ const labels = createLabelLayer(overlay);
 const bodies = buildScene();
 const bodyById = new Map(bodies.map((b) => [b.id, b]));
 const picking = new Picking();
-const paused = false; // Phase 5 wires prefers-reduced-motion and card-open into this.
+
+// Orbital motion, twinkle/pulse, and camera flights all freeze under prefers-reduced-motion,
+// per ENGINE_SPEC §2. Phase 2 additionally freezes motion whenever a card is open; there's no
+// card yet, so that half isn't wired here.
+const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+let reduceMotion = reduceMotionQuery.matches;
+reduceMotionQuery.addEventListener('change', (e) => {
+  reduceMotion = e.matches;
+});
 
 // Midpoint between Sol (0,0) and Nova (4200,0) — a placeholder "see the whole system" framing.
 // Phase 2/5 can fit this to the actual system bounds and viewport once the UI chrome (which
@@ -43,7 +51,7 @@ const HOME_X = 2100;
 
 function flyHome(ms?: number): void {
   const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, camera.vh / 6000));
-  camera.flyTo(HOME_X, 0, zoom, ms);
+  camera.flyTo(HOME_X, 0, zoom, reduceMotion ? 0 : ms);
 }
 flyHome(0);
 
@@ -53,7 +61,7 @@ attachInput(canvas, camera, bodies, {
     if (!body) return;
     picking.enterBody(id);
     const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, 140 / Math.max(body.radius, 10)));
-    camera.flyTo(body.wx, body.wy, zoom);
+    camera.flyTo(body.wx, body.wy, zoom, reduceMotion ? 0 : undefined);
   },
   onBack() {
     picking.back();
@@ -65,14 +73,19 @@ attachInput(canvas, camera, bodies, {
   },
 });
 
+let clock = 0; // elapsed time fed to time-driven visuals (twinkle, pulse, gas drift) — frozen
+// under reduced motion instead of advancing every frame.
+
 startLoop((dt, t) => {
-  camera.update(dt);
-  updateScene(bodies, dt, paused);
+  const active = !reduceMotion;
+  camera.update(active ? dt : 0);
+  updateScene(bodies, dt, !active);
+  if (active) clock = t;
 
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, camera.vw, camera.vh);
-  starfield.draw(ctx, camera, t);
-  drawScene(ctx, camera, bodies, t);
+  starfield.draw(ctx, camera, clock);
+  drawScene(ctx, camera, bodies, clock);
 
   labels.update(
     camera,
