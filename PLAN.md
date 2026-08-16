@@ -448,13 +448,36 @@ explicitly left unwired pending exactly this.
 Read [CONTENT_GUIDE](docs/CONTENT_GUIDE.md) first. One checkbox = every moon in that body written
 at its §3 tier, with `npm run validate` clean.
 
-- [ ] `sol.ts` · [ ] `mercury.ts` · [ ] `venus.ts` · [ ] `terra.ts` · [ ] `mars.ts`
-- [ ] `belt.ts` · [ ] `pallas.ts` · [ ] `jupiter.ts` · [ ] `saturn.ts`
-- [ ] `uranus.ts` · [ ] `neptune.ts` · [ ] `chronos.ts`
-- [ ] `prometheus.ts` · [ ] `vulcan.ts` · [ ] `echo.ts` · [ ] `chimera.ts`
-- [ ] `arachne.ts` · [ ] `odyssey.ts`
-- [ ] `nova.ts` · [ ] `babel.ts` · [ ] `genesis.ts` · [ ] `forge.ts`
-- [ ] `velocity.ts` · [ ] `athenaeum.ts` · [ ] `daedalus.ts` · [ ] `iris.ts` · [ ] `aegis.ts`
+- [x] `sol.ts` · [x] `mercury.ts` · [x] `venus.ts` · [x] `terra.ts` · [x] `mars.ts` — batches 1 & 3
+- [x] `belt.ts` · [x] `pallas.ts` · [x] `jupiter.ts` · [x] `saturn.ts` — batch 2
+- [x] `uranus.ts` · [x] `neptune.ts` · [x] `chronos.ts` — batch 3
+- [x] `prometheus.ts` · [x] `vulcan.ts` · [x] `echo.ts` · [x] `chimera.ts` — batch 4
+- [ ] `arachne.ts` · [ ] `odyssey.ts` — batch 5 (planned)
+- [ ] `nova.ts` **(exists but incomplete — only `self-attention`, the Phase 2 pressure-test
+      entry; batch 5 extends it with the other 5 moons, same pattern mercury/jupiter used in
+      batches 1–2)** · [ ] `babel.ts` — batch 5 (planned)
+- [ ] `genesis.ts` · [ ] `forge.ts` · [ ] `velocity.ts` · [ ] `athenaeum.ts` — batch 6 (planned)
+- [ ] `daedalus.ts` · [ ] `iris.ts` · [ ] `aegis.ts` — batch 7 (planned)
+- [ ] **Add the verified Quinlan 1986 reference to `terra.ts`'s `id3-c45` entry.** The batch-1
+      agent correctly declined to cite it — Springer/ACM/IEEE all blocked the fetch — but
+      independent verification during batch-1 review confirmed DOI `10.1007/BF00116251` resolves
+      via Crossref to "Induction of decision trees", Quinlan, 1986. Safe to add:
+      `{ title: 'Induction of Decision Trees', url: 'https://doi.org/10.1007/BF00116251', year: 1986 }`
+      in `references.papers`. Small, standalone, not tied to any batch.
+- [ ] **Decide the facets convention** for `handlesMissing`/`handlesCategorical` (does a facet
+      describe the algorithm or the common library implementation?) and for `Facets.task` values
+      the frozen union has no slot for (found via `association-rules` in `jupiter.ts`, which had
+      to use `task: ['clustering']` as the nearest available fit — genuinely wrong, not just
+      imprecise). Concrete conflict: `terra.ts` sets `handlesMissing`/`handlesCategorical` true/true
+      on the tree entries (true of CART the method, false of `DecisionTreeClassifier`); `mars.ts`
+      sets `gradient-boosting` false/false (true of `HistGradientBoosting*`). Both agents flagged
+      this independently. Since `ENGINE_SPEC.md §5` has the Phase 4 advisor rank on facets
+      directly, an inconsistent convention degrades advisor output invisibly. Resolve before too
+      many more bodies encode the inconsistency; retrofit `terra.ts`/`mars.ts`/`jupiter.ts` once
+      decided. Options: (a) facets always describe the common implementation, method-level
+      capability noted in prose; (b) facets always describe the method, library gaps noted in
+      `whenNotToUse`; (c) extend the schema — needs the user's sign-off, `types/content.ts` is
+      frozen.
 - [ ] **Re-verify the 3 Phase 2 entries** — `linear-regression`, `dbscan` and `self-attention`
       were written in a session whose `WebFetch` returned `EGRESS_BLOCKED` for every external host
       (see the Phase 2 note above), so they were sourced from search-result excerpts rather than
