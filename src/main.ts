@@ -12,7 +12,15 @@ import { createCanvas, startLoop } from './engine/canvas.ts';
 import { Camera } from './engine/camera.ts';
 import { createStarfield } from './render/starfield.ts';
 import { drawOrbit } from './render/orbit.ts';
+import { drawPlanet } from './render/planet.ts';
 import { system } from './content/system.ts';
+import { TILT } from './engine/constants.ts';
+
+// TEMP: engine/scene.ts (Task 10) owns real orbital position/motion. Inlined here only so
+// render/planet.ts is visually verifiable before scene.ts lands.
+function tempOrbitPos(cx: number, cy: number, r: number, theta: number): { wx: number; wy: number } {
+  return { wx: cx + r * Math.cos(theta), wy: cy + r * Math.sin(theta) * TILT };
+}
 
 function mustFind<T extends Element>(selector: string): T {
   const el = document.querySelector<T>(selector);
@@ -42,6 +50,23 @@ startLoop((dt, t) => {
     const star = starById.get(body.litBy);
     if (!star) continue;
     drawOrbit(ctx, camera, star.at[0], star.at[1], body.orbitRadius, false);
+    const theta = body.phase * Math.PI * 2;
+    const pos = tempOrbitPos(star.at[0], star.at[1], body.orbitRadius, theta);
+    drawPlanet(
+      ctx,
+      camera,
+      {
+        id: body.id,
+        wx: pos.wx,
+        wy: pos.wy,
+        radius: body.radius,
+        hue: body.hue,
+        litByPos: { wx: star.at[0], wy: star.at[1] },
+        gasGiant: body.id === 'jupiter' || body.id === 'genesis',
+      },
+      false,
+      t,
+    );
   }
 });
 
