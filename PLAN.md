@@ -455,6 +455,15 @@ at its §3 tier, with `npm run validate` clean.
 - [ ] `arachne.ts` · [ ] `odyssey.ts`
 - [ ] `nova.ts` · [ ] `babel.ts` · [ ] `genesis.ts` · [ ] `forge.ts`
 - [ ] `velocity.ts` · [ ] `athenaeum.ts` · [ ] `daedalus.ts` · [ ] `iris.ts` · [ ] `aegis.ts`
+- [ ] **Re-verify the 3 Phase 2 entries** — `linear-regression`, `dbscan` and `self-attention`
+      were written in a session whose `WebFetch` returned `EGRESS_BLOCKED` for every external host
+      (see the Phase 2 note above), so they were sourced from search-result excerpts rather than
+      opened pages and never got CONTENT_GUIDE §3's "open every URL" step. **WebFetch works in
+      this environment** — verified against scikit-learn.org, 2026-08-16. Open every cited URL and
+      re-check years, authors, complexity bounds and hyperparameter defaults against real sources.
+      Highest risk: `linear-regression`'s 1805 Legendre attribution and `O(n·p²)` SVD bound;
+      `dbscan`'s `O(n log n)` / `O(n²)` bounds and its two cited papers; `self-attention`'s
+      citations and any lineage claim.
 - [ ] Cross-link pass — every entry has ≥2 resolving `related`, ≥1 crossing bodies where sensible
 - [ ] `npm run check-links` — fix or drop every dead URL
 

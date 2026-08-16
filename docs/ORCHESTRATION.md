@@ -113,7 +113,13 @@ READ FIRST, in this order:
 YOUR TASK
 Create src/content/bodies/JUPITER.ts exporting a `Body` object with one `Entry` per moon
 listed for that body in PLAN.md §3. Write each at the tier marked there:
-  ★ = Tier 1 (full entry)   unmarked = Tier 2 (stub: hook, intuition, facets, related, 2 refs)
+  ★ = Tier 1 (full entry)   unmarked = Tier 2 (short entry)
+A Tier 2 stub is SHORT, not PARTIAL. types/content.ts is frozen and makes howItWorks,
+whenToUse and whenNotToUse required on every entry, so a Tier 2 entry still needs a
+one-sentence howItWorks.summary, ~3 brief steps, and 2 each of whenToUse/whenNotToUse —
+short but real, never filler written to satisfy the compiler. The ONLY fields you skip at
+Tier 2 are math, code, hyperparameters and complexity. Keep aliases where the thing has a
+real second name. See CONTENT_GUIDE §4 "Tier 2 stubs" for the full table.
 
 RESEARCH FIRST — THIS IS THE CORE REQUIREMENT
 Every entry is written from sources, not from recall. For each algorithm, in this order:
@@ -130,6 +136,21 @@ confident, specific, subtly-wrong ones.
 This applies to ALL entries, including algorithms you are certain you know. No exceptions.
 If you do not have web search and fetch tools available, stop and say so — you cannot do this
 task correctly without them.
+
+PDFs: WebFetch WILL INVENT SPECIFICS rather than admit it could not read the file. It answers
+via a small model, and when a PDF has no extractable text layer that model still answers, in
+the same confident tone as a real read. This actually happened in batch 1 — a fetch of
+Friedman's gradient boosting paper returned plausible, correctly-formatted hyperparameter
+numbers that appear nowhere in the paper. So:
+  - Treat a WebFetch summary of a PDF as a LEAD, never as a source.
+  - Prefer HTML: the arXiv /abs/ page, the journal landing page, the library's docs.
+  - To quote a number from a PDF, extract the text yourself and confirm the number is in it.
+    If you cannot point at the sentence you got a number from, you do not have the number.
+  - If a PDF yields no text, treat the claim as unsourced and leave it out.
+  - Verify DOIs via https://api.crossref.org/works/<doi> (structured title/authors/year). A
+    403 from Wiley, Springer, ACM or IEEE means the fetch was refused, NOT that the DOI is
+    bad — do not drop a citation on that evidence alone.
+See CONTENT_GUIDE §3 for the full explanation.
 
 HARD RULES
 - Edit ONLY src/content/bodies/JUPITER.ts. Do not touch types, system.ts, registry.ts,
@@ -263,9 +284,15 @@ Seven batch PRs is the right granularity. Twenty-seven, one per body, would be m
 | Merge conflicts | Structurally impossible if the one-file-per-agent rule holds. |
 | Cross-links pointing nowhere | The validator resolves every `related` id. Expect failures in early batches, since later bodies don't exist yet — fix in a final cross-link pass. |
 | Review backlog | Cap at 4 agents per batch. |
+| **Invented specifics from an unreadable PDF** | Nothing mechanical. `WebFetch` answers PDF prompts through a small model that does not reliably admit an empty extraction, so a scanned paper yields confident invented numbers under a genuine citation. The brief's PDF clause (§5) and CONTENT_GUIDE §3 are the only defence: prefer HTML, extract PDF text yourself before quoting a number, verify DOIs through the Crossref API rather than the publisher. **Observed in batch 1** — see CONTENT_GUIDE §3 for the case. |
 
 The one that will actually bite you is **fabricated references**. Everything else is caught
 mechanically. That one needs your eyes.
+
+Note the shape of the PDF row above: the citation is real, the DOI resolves, `check-links` passes
+— and a number inside the entry is invented anyway. Link-checking cannot see it, and neither can
+the validator. When you spot-check specifics (§7), prefer entries whose sources are pre-2000
+papers or technical reports; those are the ones most likely to be scans.
 
 ---
 
