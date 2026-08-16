@@ -42,6 +42,7 @@ because `base` is configured for GitHub Pages.
 | **[PLAN.md](PLAN.md)** | Always first. Ground rules, the full taxonomy, the phase checklist. |
 | **[docs/ENGINE_SPEC.md](docs/ENGINE_SPEC.md)** | Before touching `src/engine/`. Coordinate systems, module contracts, canvas pitfalls. |
 | **[docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md)** | Before writing content. Register, length targets, a gold-standard entry, vetted sources. |
+| **[docs/ORCHESTRATION.md](docs/ORCHESTRATION.md)** | Before running multiple agents. What parallelizes (Phase 3 only), the agent brief, the batch plan. |
 
 ## Adding an algorithm
 

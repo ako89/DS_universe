@@ -97,7 +97,8 @@ boss wants to know why" and get a ranked shortlist with honest pros and cons. Ev
 them genuinely informed and points them at real books, papers, free texts and lectures.
 
 **Environment (verified 2026-08-15):**
-- Windows 11, PowerShell primary. Git repo on `main` tracking `origin/main`.
+- **Repo path: `C:\Users\akoda\Projects\DS_universe`.** Windows 11, PowerShell primary.
+  Git on `main` tracking `origin/main` at `https://github.com/ako89/DS_universe.git`.
 - **GitHub Pages is already enabled** on the repo. Phase 6 only needs the workflow file and a
   correct `base` path — do not re-enable or reconfigure Pages.
 - **Node v24.19.0 / npm 11.17.0** at `C:\Program Files\nodejs\`. Python 3.14.7 also present.
@@ -306,19 +307,13 @@ Phases 0–2 are sequential. Phase 3 (content) can run parallel with 4–5 once 
 - The dev server URL includes the base path: **`http://localhost:5173/DS_universe/`**, not `/`.
 - `.claude/launch.json` uses the absolute path to `npm.cmd` because tool subprocesses inherit a
   PATH that predates the Node install. Once shells refresh, this can go back to plain `"npm"`.
-- ⚠️ **The repo lives inside iCloud Drive, which silently creates sync-conflict copies.** During
-  Phase 0 iCloud renamed `tsconfig.json` to `tsconfig 2.json`, leaving no `tsconfig.json` at all.
-  The symptom was confusing: `tsc --noEmit` printed its *help text* instead of compiling, because
-  with no config and no input files it has nothing to do. **If a build breaks inexplicably, check
-  for `* 2.*` files first:**
-
-  ```bash
-  git status --short
-  ```
-
-  Recovery is `Move-Item -LiteralPath "name 2.ext" -Destination "name.ext"` after confirming the
-  conflict copy is the version you want. This will keep happening while the project is under
-  `iCloudDrive/` — moving the repo to a non-synced path would remove the whole class of problem.
+- ✅ **The repo was moved out of iCloud Drive** at the end of Phase 0, to
+  `C:\Users\akoda\Projects\DS_universe`. iCloud had silently renamed `tsconfig.json` to
+  `tsconfig 2.json`, leaving no `tsconfig.json` at all, and the symptom was badly misleading:
+  `tsc --noEmit` printed its *help text* rather than an error, because with no config and no
+  input files it has nothing to do. **Work only in the new path.** The old
+  `iCloudDrive\Documents\Projects\DS_universe` folder is a stale mirror containing a `MOVED.md`
+  marker and is safe to delete.
 
 ### Phase 1 — Engine
 
@@ -460,5 +455,6 @@ GitHub Pages is **already enabled** — do not reconfigure it.
 - **Never invent a citation.** Never guess a YouTube video ID. Run `npm run check-links` before
   deploying.
 - **Content parallelizes; engine does not.** Multiple agents can each own a body module safely.
-  Two agents in `engine/` at once will conflict.
+  Two agents in `engine/` at once will conflict. If you are running several agents, read
+  [docs/ORCHESTRATION.md](docs/ORCHESTRATION.md) first — it has the agent brief and batch plan.
 - **If `node` isn't recognised**, the shell predates the install — see §1. Don't install anything.
