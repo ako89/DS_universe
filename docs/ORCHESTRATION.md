@@ -141,12 +141,21 @@ PDFs: WebFetch WILL INVENT SPECIFICS rather than admit it could not read the fil
 via a small model, and when a PDF has no extractable text layer that model still answers, in
 the same confident tone as a real read. This actually happened in batch 1 — a fetch of
 Friedman's gradient boosting paper returned plausible, correctly-formatted hyperparameter
-numbers that appear nowhere in the paper. So:
-  - Treat a WebFetch summary of a PDF as a LEAD, never as a source.
-  - Prefer HTML: the arXiv /abs/ page, the journal landing page, the library's docs.
-  - To quote a number from a PDF, extract the text yourself and confirm the number is in it.
-    If you cannot point at the sentence you got a number from, you do not have the number.
-  - If a PDF yields no text, treat the claim as unsourced and leave it out.
+numbers that appear nowhere in the paper. IT IS NOT LIMITED TO SCANNED PDFS — batch 4 caught
+the same failure on the AlexNet paper, a normal PDF with an ordinary clean text layer: WebFetch
+still returned invented numbers (wrong error rates, wrong neuron count, wrong layer count),
+twice, with nothing distinguishing the response from a real read. It was only caught because
+the agent downloaded the PDF and ran pdftotext on it directly. So:
+  - Treat a WebFetch summary of ANY PDF as a LEAD, never as a source — not only ones you
+    suspect are scanned.
+  - Prefer HTML: the arXiv /abs/ page (or its ar5iv full-text rendering for an in-paper quote),
+    the journal landing page, the library's docs.
+  - NEVER take a specific number from a WebFetch PDF summary. If a number only exists in a PDF,
+    download it and extract the text yourself (pdftotext -layout or equivalent), and confirm the
+    number appears in the extracted text verbatim. If you cannot point at the sentence — in text
+    you personally pulled from the file — that a number came from, you do not have the number.
+  - If a PDF yields no usable text, or you cannot self-extract it, treat the claim as unsourced
+    and leave it out.
   - Verify DOIs via https://api.crossref.org/works/<doi> (structured title/authors/year). A
     403 from Wiley, Springer, ACM or IEEE means the fetch was refused, NOT that the DOI is
     bad — do not drop a citation on that evidence alone.
@@ -284,7 +293,7 @@ Seven batch PRs is the right granularity. Twenty-seven, one per body, would be m
 | Merge conflicts | Structurally impossible if the one-file-per-agent rule holds. |
 | Cross-links pointing nowhere | The validator resolves every `related` id. Expect failures in early batches, since later bodies don't exist yet — fix in a final cross-link pass. |
 | Review backlog | Cap at 4 agents per batch. |
-| **Invented specifics from an unreadable PDF** | Nothing mechanical. `WebFetch` answers PDF prompts through a small model that does not reliably admit an empty extraction, so a scanned paper yields confident invented numbers under a genuine citation. The brief's PDF clause (§5) and CONTENT_GUIDE §3 are the only defence: prefer HTML, extract PDF text yourself before quoting a number, verify DOIs through the Crossref API rather than the publisher. **Observed in batch 1** — see CONTENT_GUIDE §3 for the case. |
+| **Invented specifics from a PDF fetch** | Nothing mechanical. `WebFetch` answers PDF prompts through a small model that does not reliably admit a bad extraction, so it can return confident invented numbers under a genuine citation — **and this is not limited to scans.** Batch 4 caught it on the AlexNet paper, a PDF with a completely normal text layer. The brief's PDF clause (§5) and CONTENT_GUIDE §3 are the only defence: never trust a WebFetch PDF summary for a number, self-extract PDF text before quoting anything from one, verify DOIs through the Crossref API rather than the publisher. **Observed in batch 1 (Friedman, a scan) and batch 4 (AlexNet, not a scan)** — see CONTENT_GUIDE §3 for both cases. |
 
 The one that will actually bite you is **fabricated references**. Everything else is caught
 mechanically. That one needs your eyes.

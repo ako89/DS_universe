@@ -223,22 +223,35 @@ distinguished it from a real read. Had it been trusted, two invented numbers wou
 inside an entry whose citation was genuine, which is precisely the failure mode this whole
 section exists to prevent: real paper, real DOI, invented content.
 
-**The rule:** a `WebFetch` summary of a PDF is a *lead*, never a source.
+**It is not limited to scans.** Batch 4 caught a worse case: fetching the AlexNet paper — a
+normal PDF with a clean, ordinary text layer, nothing exotic about it — twice returned invented
+numbers anyway (a wrong top-5/top-1 error split, a wrong neuron count, a wrong count of
+fully-connected layers). There was no signal distinguishing this from a good fetch; the only
+reason it was caught is that the agent downloaded the PDF and ran `pdftotext` on it directly
+rather than trusting the summary. **So the "no text layer" framing above describes one way this
+fails, not the boundary of the risk.** Treat every PDF this way, not just scanned ones.
 
-- **Prefer HTML.** The arXiv `/abs/` page, the journal landing page, the author's own HTML
-  version, or the library's documentation. Use these for title, authors and year — they are
-  reliable and they are most of what you cite.
-- **To quote a number from a PDF, extract its text yourself** and confirm the number appears in
-  the extracted text. If it does not, you did not read it.
-- **If a PDF will not yield text, treat the claim as unsourced** and apply "If you cannot source
-  it" below. Scanned papers are common among pre-2000 technical reports — expect this.
+**The rule:** a `WebFetch` summary of a PDF is a *lead*, never a source — for any PDF, not only
+ones you suspect are scanned.
+
+- **Prefer HTML.** The arXiv `/abs/` page (or its `ar5iv` full-text HTML rendering for an
+  in-paper quote), the journal landing page, the author's own HTML version, or the library's
+  documentation. Use these for title, authors and year, and for any specific number you need to
+  cite — they are reliable and they are most of what you cite.
+- **Never take a specific number from a `WebFetch` PDF summary, ever.** If a number only exists
+  in a PDF, download it and extract the text yourself (`pdftotext -layout`, or equivalent) and
+  confirm the number appears in the extracted text verbatim. If it does not, you did not read it,
+  regardless of how confident or well-formatted the summary looked.
+- **If a PDF will not yield text, or you cannot self-extract it, treat the claim as unsourced**
+  and apply "If you cannot source it" below. Scanned papers are common among pre-2000 technical
+  reports — expect this.
 - **Verify a DOI through metadata, not the publisher.** `https://api.crossref.org/works/<doi>`
   returns title, authors and year as structured data, and works when the publisher blocks
   automated access. A 403 from Wiley, Springer, ACM or IEEE means the fetch was refused, **not**
   that the DOI is bad — do not drop a citation on that evidence alone.
 
-The tell is confidence without traceability: if you cannot point at the sentence you got a
-number from, you do not have the number.
+The tell is confidence without traceability: if you cannot point at the sentence — in text you
+personally pulled out of the file — that a number came from, you do not have the number.
 
 ### What must be sourced
 
