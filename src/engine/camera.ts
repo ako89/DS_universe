@@ -88,15 +88,25 @@ export class Camera {
   }
 
   /** Starts (or replaces) a tween to the given world point and zoom. Cancels any tween in
-   *  flight — the new flight starts from the camera's current, possibly mid-tween, position. */
+   *  flight — the new flight starts from the camera's current, possibly mid-tween, position.
+   *  `ms <= 0` snaps immediately instead of starting a zero-duration tween, which would divide
+   *  elapsed/duration by zero on the first update(). */
   flyTo(wx: number, wy: number, zoom: number, ms: number = CAM_TWEEN_MS): void {
+    const clampedZoom = clamp(zoom, ZOOM_MIN, ZOOM_MAX);
+    if (ms <= 0) {
+      this.x = wx;
+      this.y = wy;
+      this.zoom = clampedZoom;
+      this.tween = null;
+      return;
+    }
     this.tween = {
       fromX: this.x,
       fromY: this.y,
       fromZoom: this.zoom,
       toX: wx,
       toY: wy,
-      toZoom: clamp(zoom, ZOOM_MIN, ZOOM_MAX),
+      toZoom: clampedZoom,
       elapsed: 0,
       duration: ms / 1000,
     };

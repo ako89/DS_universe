@@ -61,4 +61,19 @@ describe('Camera', () => {
     expect(cam.y).toBeCloseTo(-200, 9);
     expect(cam.zoom).toBeCloseTo(2, 9);
   });
+
+  it('flyTo with ms <= 0 snaps immediately instead of starting a zero-duration tween', () => {
+    const cam = new Camera(800, 600);
+    cam.flyTo(300, 150, 3, 0);
+    expect(cam.isTweening).toBe(false);
+    expect(cam.x).toBe(300);
+    expect(cam.y).toBe(150);
+    expect(cam.zoom).toBe(3);
+
+    // A zero-duration tween would divide 0/0 into NaN on the very first update (elapsed
+    // starts at 0, e.g. the first frame after page load, where dt can itself be 0).
+    cam.update(0);
+    expect(Number.isNaN(cam.x)).toBe(false);
+    expect(cam.x).toBe(300);
+  });
 });

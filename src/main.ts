@@ -1,21 +1,16 @@
 /**
  * Bootstrap. This file stays thin (~80 lines): find the roots, build the scene, wire input,
  * start the loop. Logic belongs in engine/, ui/ and data/ — not here.
- *
- * Phase 1 in progress: modules plug in here as they land (see PLAN.md §4 Phase 1 and
- * docs/ENGINE_SPEC.md §9 for the contracts).
  */
 
-import { BG } from './engine/constants.ts';
+import { BG, ZOOM_MAX, ZOOM_MIN } from './engine/constants.ts';
 import { createCanvas, startLoop } from './engine/canvas.ts';
 import { Camera } from './engine/camera.ts';
 import { buildScene, updateScene } from './engine/scene.ts';
+import { Picking } from './engine/picking.ts';
+import { attachInput } from './engine/input.ts';
 import { createStarfield } from './render/starfield.ts';
-import { drawOrbit } from './render/orbit.ts';
-import { drawPlanet } from './render/planet.ts';
-import { drawStar } from './render/star.ts';
-import { drawRingsBack, drawRingsFront } from './render/rings.ts';
-import { drawBelt } from './render/belt.ts';
+import { drawScene } from './render/draw.ts';
 import { createLabelLayer } from './render/labels.ts';
 
 function mustFind<T extends Element>(selector: string): T {
@@ -37,7 +32,38 @@ onResize((newVw, newVh) => {
 const starfield = createStarfield();
 const labels = createLabelLayer(overlay);
 const bodies = buildScene();
+const bodyById = new Map(bodies.map((b) => [b.id, b]));
+const picking = new Picking();
 const paused = false; // Phase 5 wires prefers-reduced-motion and card-open into this.
+
+// Midpoint between Sol (0,0) and Nova (4200,0) — a placeholder "see the whole system" framing.
+// Phase 2/5 can fit this to the actual system bounds and viewport once the UI chrome (which
+// eats into the usable canvas area) exists.
+const HOME_X = 2100;
+
+function flyHome(ms?: number): void {
+  const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, camera.vh / 6000));
+  camera.flyTo(HOME_X, 0, zoom, ms);
+}
+flyHome(0);
+
+attachInput(canvas, camera, bodies, {
+  onSelectBody(id) {
+    const body = bodyById.get(id);
+    if (!body) return;
+    picking.enterBody(id);
+    const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, 140 / Math.max(body.radius, 10)));
+    camera.flyTo(body.wx, body.wy, zoom);
+  },
+  onBack() {
+    picking.back();
+    if (picking.view.level === 'universe') flyHome();
+  },
+  onReset() {
+    picking.reset();
+    flyHome();
+  },
+});
 
 startLoop((dt, t) => {
   camera.update(dt);
@@ -46,46 +72,7 @@ startLoop((dt, t) => {
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, camera.vw, camera.vh);
   starfield.draw(ctx, camera, t);
-
-  for (const body of bodies) {
-    if (body.type === 'star') {
-      drawStar(ctx, camera, { id: body.id, wx: body.wx, wy: body.wy, radius: body.radius, hue: body.hue }, t);
-      continue;
-    }
-
-    drawOrbit(ctx, camera, body.centerX, body.centerY, body.orbitRadius, false);
-
-    if (body.type === 'belt') {
-      drawBelt(ctx, camera, {
-        id: body.id,
-        wx: body.centerX,
-        wy: body.centerY,
-        orbitRadius: body.orbitRadius,
-        hue: body.hue,
-        rockCount: body.rockCount ?? 0,
-      });
-      continue;
-    }
-
-    const planetVisual = {
-      id: body.id,
-      wx: body.wx,
-      wy: body.wy,
-      radius: body.radius,
-      hue: body.hue,
-      litByPos: { wx: body.centerX, wy: body.centerY },
-      gasGiant: body.id === 'jupiter' || body.id === 'genesis',
-    };
-
-    if (body.id === 'saturn') {
-      const ring = { wx: body.wx, wy: body.wy, radius: body.radius, hue: body.hue };
-      drawRingsBack(ctx, camera, ring);
-      drawPlanet(ctx, camera, planetVisual, false, t);
-      drawRingsFront(ctx, camera, ring);
-    } else {
-      drawPlanet(ctx, camera, planetVisual, false, t);
-    }
-  }
+  drawScene(ctx, camera, bodies, t);
 
   labels.update(
     camera,
@@ -98,6 +85,3 @@ startLoop((dt, t) => {
     })),
   );
 });
-
-// Remaining Phase 1 wiring goes here as modules land:
-//   attachInput(canvas, camera, bodies);
