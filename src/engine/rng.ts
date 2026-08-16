@@ -14,3 +14,14 @@ export function mulberry32(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/** Derives a stable numeric seed from a body id, for per-body procedural variation (gas band
+ *  noise, star pulse phase) that stays consistent across reloads without a table of seeds. */
+export function hashSeed(id: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}

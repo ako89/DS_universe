@@ -12,7 +12,7 @@
  */
 
 import type { Camera } from '../engine/camera.ts';
-import { mulberry32 } from '../engine/rng.ts';
+import { hashSeed, mulberry32 } from '../engine/rng.ts';
 
 export interface PlanetVisual {
   id: string;
@@ -29,15 +29,6 @@ const RIM_ALPHA = 0.25;
 const GLOW_ALPHA_REST = 0.12;
 const GLOW_ALPHA_HOVER = 0.3;
 const GLOW_PEAK_ALPHA = 0.3; // baked into the cached gradient; rest/hover scale it via globalAlpha
-
-function hashSeed(id: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < id.length; i++) {
-    h ^= id.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
 
 interface PlanetCache {
   radiusBucket: number;
