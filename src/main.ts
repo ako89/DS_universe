@@ -2,13 +2,13 @@
  * Bootstrap. This file stays thin (~80 lines): find the roots, build the scene, wire input,
  * start the loop. Logic belongs in engine/, ui/ and data/ — not here.
  *
- * Phase 0 status: the engine modules do not exist yet. This currently proves the pipeline
- * end to end (TypeScript -> Vite -> a painted canvas at the right DPR) and marks where each
- * Phase 1 module plugs in. Replace the placeholder paint with the real loop as modules land;
- * see PLAN.md §7 Phase 1 and docs/ENGINE_SPEC.md §5.4 for the contracts to implement against.
+ * Phase 1 in progress: modules plug in here as they land (see PLAN.md §4 Phase 1 and
+ * docs/ENGINE_SPEC.md §9 for the contracts). Until camera/scene/render exist, this paints the
+ * background plus a fixed debug rect so engine/canvas.ts's DPR handling is visually verifiable.
  */
 
-import { BG, DPR_CAP } from './engine/constants.ts';
+import { BG } from './engine/constants.ts';
+import { createCanvas, startLoop } from './engine/canvas.ts';
 
 function mustFind<T extends Element>(selector: string): T {
   const el = document.querySelector<T>(selector);
@@ -17,32 +17,25 @@ function mustFind<T extends Element>(selector: string): T {
 }
 
 const canvas = mustFind<HTMLCanvasElement>('#scene');
+const { ctx, onResize } = createCanvas(canvas);
 
-const ctx = canvas.getContext('2d');
-if (!ctx) throw new Error('2D canvas context unavailable in this browser');
+let vw = canvas.clientWidth;
+let vh = canvas.clientHeight;
+onResize((newVw, newVh) => {
+  vw = newVw;
+  vh = newVh;
+});
 
-/**
- * Placeholder for engine/canvas.ts. Kept only so Phase 0 has something to look at; delete it
- * once createCanvas() exists rather than letting two DPR code paths coexist.
- */
-function resize(canvasEl: HTMLCanvasElement, c: CanvasRenderingContext2D): void {
-  const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
-  const vw = canvasEl.clientWidth;
-  const vh = canvasEl.clientHeight;
-  canvasEl.width = Math.round(vw * dpr);
-  canvasEl.height = Math.round(vh * dpr);
-  // All render code from here on draws in CSS pixels.
-  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+// Temporary DPR sharpness probe for engine/canvas.ts — a rect at a fixed CSS-pixel size and
+// position. Remove once render/planet.ts gives the loop something real to draw.
+startLoop(() => {
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, vw, vh);
+  ctx.fillStyle = '#e6e8f0';
+  ctx.fillRect(40, 40, 120, 80);
+});
 
-  c.fillStyle = BG;
-  c.fillRect(0, 0, vw, vh);
-}
-
-new ResizeObserver(() => resize(canvas, ctx)).observe(canvas);
-resize(canvas, ctx);
-
-// Phase 1 wiring goes here:
-//   const { ctx, vw, vh, onResize } = createCanvas(canvas);
+// Remaining Phase 1 wiring goes here as modules land:
 //   const camera = new Camera(vw, vh);
 //   const bodies = buildScene();
 //   attachInput(canvas, camera, bodies);
