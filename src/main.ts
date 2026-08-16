@@ -11,6 +11,8 @@ import { BG } from './engine/constants.ts';
 import { createCanvas, startLoop } from './engine/canvas.ts';
 import { Camera } from './engine/camera.ts';
 import { createStarfield } from './render/starfield.ts';
+import { drawOrbit } from './render/orbit.ts';
+import { system } from './content/system.ts';
 
 function mustFind<T extends Element>(selector: string): T {
   const el = document.querySelector<T>(selector);
@@ -28,12 +30,19 @@ onResize((newVw, newVh) => {
 });
 
 const starfield = createStarfield();
+const starById = new Map(system.stars.map((s) => [s.id, s]));
 
 startLoop((dt, t) => {
   camera.update(dt);
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, camera.vw, camera.vh);
   starfield.draw(ctx, camera, t);
+
+  for (const body of system.bodies) {
+    const star = starById.get(body.litBy);
+    if (!star) continue;
+    drawOrbit(ctx, camera, star.at[0], star.at[1], body.orbitRadius, false);
+  }
 });
 
 // Remaining Phase 1 wiring goes here as modules land:
