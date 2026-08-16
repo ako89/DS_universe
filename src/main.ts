@@ -9,6 +9,8 @@
 
 import { BG } from './engine/constants.ts';
 import { createCanvas, startLoop } from './engine/canvas.ts';
+import { Camera } from './engine/camera.ts';
+import { createStarfield } from './render/starfield.ts';
 
 function mustFind<T extends Element>(selector: string): T {
   const el = document.querySelector<T>(selector);
@@ -17,26 +19,24 @@ function mustFind<T extends Element>(selector: string): T {
 }
 
 const canvas = mustFind<HTMLCanvasElement>('#scene');
-const { ctx, onResize } = createCanvas(canvas);
+const { ctx, vw, vh, onResize } = createCanvas(canvas);
 
-let vw = canvas.clientWidth;
-let vh = canvas.clientHeight;
+const camera = new Camera(vw, vh);
 onResize((newVw, newVh) => {
-  vw = newVw;
-  vh = newVh;
+  camera.vw = newVw;
+  camera.vh = newVh;
 });
 
-// Temporary DPR sharpness probe for engine/canvas.ts — a rect at a fixed CSS-pixel size and
-// position. Remove once render/planet.ts gives the loop something real to draw.
-startLoop(() => {
+const starfield = createStarfield();
+
+startLoop((dt, t) => {
+  camera.update(dt);
   ctx.fillStyle = BG;
-  ctx.fillRect(0, 0, vw, vh);
-  ctx.fillStyle = '#e6e8f0';
-  ctx.fillRect(40, 40, 120, 80);
+  ctx.fillRect(0, 0, camera.vw, camera.vh);
+  starfield.draw(ctx, camera, t);
 });
 
 // Remaining Phase 1 wiring goes here as modules land:
-//   const camera = new Camera(vw, vh);
 //   const bodies = buildScene();
 //   attachInput(canvas, camera, bodies);
-//   startLoop((dt) => { camera.update(dt); updateScene(bodies, dt, paused); render(...); });
+//   startLoop((dt, t) => { camera.update(dt); updateScene(bodies, dt, paused); render(...); });
