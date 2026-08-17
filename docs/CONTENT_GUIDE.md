@@ -328,6 +328,43 @@ source of truth and would silently lose every Tier 2 entry from its ranking.
 
 ---
 
+## 4.5. Facets: `handlesMissing` / `handlesCategorical` convention
+
+Resolved during the Phase 3 wrap-up, after batches 1 and 2 encoded it two different ways
+independently (`terra.ts`'s tree entries at the method level, `mars.ts`'s `gradient-boosting` at
+the library level).
+
+**These two facets describe the common library implementation the entry's own code sample
+demonstrates — not the abstract method.** If the method can do something its usual implementation
+cannot (or vice versa), say so in prose — typically in `whenNotToUse` or the intuition — rather
+than letting the facet claim the method-level capability. The advisor and the card both present
+facets as a fact about *this entry as written*, so they need to agree with the code sample and the
+references, not with a more permissive variant a reader isn't being shown.
+
+Concrete pattern: scikit-learn's `DecisionTreeClassifier`/`Regressor` do not support categorical
+features natively (`handlesCategorical: false`) even though CART-the-method and Quinlan's C4.5
+both can — `id3-c45` legitimately sets `handlesCategorical: true` because *its* common
+implementation is Weka's J48, not scikit-learn, and the entry says so explicitly. Check the
+library's own current docs before setting either facet; don't infer from the algorithm's textbook
+description or from an older/newer version's behaviour than what the code sample shows.
+
+This was applied during the wrap-up to `terra.ts`'s three scikit-learn-based entries
+(`decision-trees`, `regression-trees`, `tree-pruning`); `id3-c45`, `rule-induction` and
+`mars.ts`'s `gradient-boosting` already matched the convention and needed no change. It was not
+re-audited across all 195 entries — apply it going forward, and fix an entry you notice violating
+it while you're already touching that file for another reason.
+
+**Separately unresolved:** `Facets.task`'s frozen union has no value for evaluation, safety or
+mechanistic-interpretability activities, or for association-rule mining specifically —
+`jupiter.ts`'s `association-rules` uses `task: ['clustering']` as the nearest available fit, which
+is imprecise, and several `aegis.ts` entries made similar nearest-fit judgment calls (documented in
+that file's own header comment). This is a schema gap, not a convention question, and fixing it
+needs `types/content.ts` reopened, which requires the user's sign-off (`PLAN.md` §0 rule "the
+schema doesn't fit an entry you're writing → ask before extending it") — it was not authorized as
+part of this convention decision and is not fixed here.
+
+---
+
 ## 5. Vetted reference sources
 
 Prefer these. Anything outside this list must be verified before use.

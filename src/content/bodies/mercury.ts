@@ -837,7 +837,10 @@ export const body = {
             title: 'Generalized Linear Models',
             author: 'McCullagh & Nelder',
             chapter: '2nd edition',
-            url: 'https://doi.org/10.1007/978-1-4899-3242-6',
+            // No url: the registered DOI (10.1007/978-1-4899-3242-6, confirmed via Crossref —
+            // title/authors match) resolves to a dead Springer page (404), even though the DOI
+            // metadata itself is valid. Citation kept; broken link dropped rather than replaced
+            // with an unverified guess. Caught by `npm run check-links`.
           },
         ],
         video: [{ title: 'StatQuest', url: 'https://www.youtube.com/@statquest' }],
