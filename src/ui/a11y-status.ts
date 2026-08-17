@@ -47,6 +47,10 @@ export function populateSummary(container: HTMLElement, bodies: SceneBody[]): vo
 
 export interface StatusAnnouncer {
   update(bodyId: string | null, entryId: string | undefined): void;
+  /** A one-off message unrelated to any body/entry — e.g. main.ts's deep-link restoration
+   *  reporting that a shared link's id didn't resolve. There's no dedicated toast UI for that
+   *  case, so it's read out here instead of failing silently. */
+  announce(message: string): void;
 }
 
 export function createStatusAnnouncer(container: HTMLElement): StatusAnnouncer {
@@ -59,5 +63,9 @@ export function createStatusAnnouncer(container: HTMLElement): StatusAnnouncer {
     container.textContent = content ? [content.title, content.hook, content.meta].filter(Boolean).join('. ') : '';
   }
 
-  return { update };
+  function announce(message: string): void {
+    container.textContent = message;
+  }
+
+  return { update, announce };
 }

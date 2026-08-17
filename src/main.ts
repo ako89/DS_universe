@@ -13,6 +13,7 @@ import { createCanvas, startLoop } from './engine/canvas.ts';
 import { Camera } from './engine/camera.ts';
 import { bodyTabOrder, buildScene, motionTimeScale, updateScene } from './engine/scene.ts';
 import { Picking } from './engine/picking.ts';
+import { hashFor, parseHash } from './engine/deep-link.ts';
 import { attachInput } from './engine/input.ts';
 import { createStarfield } from './render/starfield.ts';
 import type { Highlight } from './render/draw.ts';
@@ -33,6 +34,22 @@ function mustFind<T extends Element>(selector: string): T {
   if (!el) throw new Error(`Expected ${selector} in index.html, but it is missing`);
   return el;
 }
+
+// Last-resort error boundary for the entirely-synchronous setup below: everything here runs
+// top-to-bottom with no data to await, so if any of it throws, index.html's #loading element
+// (see its own comment) would otherwise be left reading "Loading…" forever with no explanation.
+// Stops reacting once the app is actually up (appReady) — a later runtime error from user
+// interaction shouldn't retroactively take over the whole page with a fatal-error screen.
+let appReady = false;
+function showFatalError(reason: unknown): void {
+  if (appReady) return;
+  const loading = document.getElementById('loading');
+  if (!loading) return;
+  const message = reason instanceof ErrorEvent ? reason.message : reason instanceof Error ? reason.message : String(reason);
+  loading.textContent = `DS Universe failed to load: ${message}`;
+}
+window.addEventListener('error', (e) => showFatalError(e));
+window.addEventListener('unhandledrejection', (e) => showFatalError(e.reason));
 
 const canvas = mustFind<HTMLCanvasElement>('#scene');
 const overlay = mustFind<HTMLDivElement>('#overlay');
@@ -120,7 +137,6 @@ function flyHome(ms?: number): void {
   const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, camera.vh / 6000));
   camera.flyTo(HOME_X, 0, zoom, reduceMotion ? 0 : ms);
 }
-flyHome(0);
 
 function findMoon(entryId: string) {
   for (const body of bodies) {
@@ -130,11 +146,22 @@ function findMoon(entryId: string) {
   return undefined;
 }
 
+/** Reflects the current ViewState in both the breadcrumb and the URL hash (deep links —
+ *  PLAN.md Phase 5), so every navigation function below stays shareable/bookmarkable for free.
+ *  Only pushes a new history entry when the hash actually changes: restoreFromHash() below calls
+ *  the same navigation functions to apply a hash the browser already navigated to (a fresh load,
+ *  or back/forward), and re-pushing an identical hash would create a redundant history entry. */
+function syncView(): void {
+  breadcrumb.update(picking.view);
+  const next = hashFor(picking.view);
+  if (location.hash !== next) history.pushState(null, '', next);
+}
+
 function goHome(): void {
   picking.reset();
   card.close();
   flyHome();
-  breadcrumb.update(picking.view);
+  syncView();
 }
 
 function goToBody(bodyId: string): void {
@@ -144,7 +171,7 @@ function goToBody(bodyId: string): void {
   card.close();
   const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, 140 / Math.max(body.radius, 10)));
   camera.flyTo(body.wx, body.wy, zoom, reduceMotion ? 0 : undefined);
-  breadcrumb.update(picking.view);
+  syncView();
 }
 
 function goBack(): void {
@@ -159,7 +186,7 @@ function goBack(): void {
   } else if (picking.view.level === 'body') {
     card.close();
   }
-  breadcrumb.update(picking.view);
+  syncView();
 }
 
 /** Opens (or crossfades to) `entryId`'s card. Flies the camera to frame its body first, but only
@@ -176,7 +203,37 @@ function focusEntry(entryId: string): void {
     camera.flyTo(found.body.wx, found.body.wy, zoom, reduceMotion ? 0 : undefined);
   }
   card.open(entryId);
-  breadcrumb.update(picking.view);
+  syncView();
+}
+
+/** Applies whatever `location.hash` currently says — a fresh page load with a deep link, or the
+ *  browser's back/forward buttons (popstate). A body id that doesn't resolve falls back to the
+ *  full map; an entry id that doesn't resolve falls back to just its body — both are announced
+ *  via the screen-reader live region (ui/a11y-status.ts) rather than failing silently, since
+ *  there's no dedicated toast UI for a one-off bad/stale link. */
+function restoreFromHash(): void {
+  const parsed = parseHash(location.hash);
+  if (!parsed) {
+    goHome();
+    return;
+  }
+
+  const body = bodyById.get(parsed.bodyId);
+  if (!body) {
+    statusAnnouncer.announce("That link wasn't found — showing the full map instead.");
+    goHome();
+    return;
+  }
+
+  if (parsed.entryId) {
+    const moon = findMoon(parsed.entryId);
+    if (moon && moon.body.id === body.id) {
+      focusEntry(parsed.entryId);
+      return;
+    }
+    statusAnnouncer.announce(`That algorithm wasn't found — showing ${body.name} instead.`);
+  }
+  goToBody(body.id);
 }
 
 attachInput(canvas, camera, bodies, {
@@ -191,6 +248,14 @@ attachInput(canvas, camera, bodies, {
   getFocusBodyId: () => (picking.view.level === 'universe' ? undefined : picking.view.bodyId),
   getFocusEntryId: () => (picking.view.level === 'detail' ? picking.view.entryId : undefined),
 });
+
+// Instant baseline framing, then restoreFromHash() flies from there to a deep link if the URL
+// has one — for the common no-hash case this is a no-op tween (same target both times), so a
+// fresh load still lands instantly, but a shared link gets a brief "here's the whole map, now
+// here's what was linked" flight instead of teleporting straight into a deep zoom with no context.
+flyHome(0);
+restoreFromHash();
+window.addEventListener('popstate', restoreFromHash);
 
 let clock = 0; // elapsed time fed to time-driven visuals (twinkle, pulse, gas drift) — frozen
 // under reduced motion, and while the card is open, instead of advancing every frame.
@@ -220,4 +285,9 @@ startLoop((dt, t) => {
       tabIndex: tabOrder.get(body.id) ?? 0,
     })),
   );
+
+  if (!appReady) {
+    appReady = true;
+    document.getElementById('loading')?.remove();
+  }
 });
