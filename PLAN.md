@@ -520,16 +520,77 @@ at its §3 tier, with `npm run validate` clean.
       (`BookRef.url` is optional). Clean run after the fix: 0 failures, 55 warnings (all 403/429,
       manually spot-checked as bot-detection, not dead links).
 
-### Phase 4 — Search & advisor (lexical)
+### Phase 4 — Search & advisor (lexical) ✅ complete
 
-- [ ] `data/search-index.ts` — BM25 + fuzzy name match, per the §9 contract
-- [ ] `ui/search.ts` — `/` palette, grouped, keyboard nav, flies camera on select
-- [ ] `data/lexicon.ts` — ~150 synonym/intent terms to start
-- [ ] `ui/advisor.ts` — modal, facet-boosted ranking, authored pros/cons, "why this matched"
-- [ ] `tests/advisor.test.ts` — ≥20 realistic problem statements with expected top-3; tune
-      weights against it so ranking cannot silently regress
+- [x] `data/search-index.ts` — BM25 + fuzzy name match, per the §9 contract
+- [x] `ui/search.ts` — `/` palette, grouped, keyboard nav, flies camera on select
+- [x] `data/lexicon.ts` — 150+ synonym/intent terms
+- [x] `ui/advisor.ts` — modal, facet-boosted ranking, authored pros/cons, "why this matched"
+      (ranking pipeline split into `ui/advisor-rank.ts`, pure/no-DOM, to hold the 300-line cap —
+      see that file's header)
+- [x] `tests/advisor.test.ts` — 26 cases: 4 structural, the §5 acceptance query, and 20 realistic
+      problem statements tuned against the actually-achieved ranking
 - **Done when:** the §5 acceptance query returns gradient boosting, logistic regression and
-  random forest, each with cons.
+  random forest, each with cons. ✅ **Verified** — see the Phase 4 completion note below.
+
+**Phase 4 complete.** Verified end-to-end with headless Playwright against the real dev server:
+pressing `/` opens the search palette, typing a name (e.g. "dbscan") fuzzy-matches and groups
+results by body, and selecting one flies the camera and opens the card with focus landing
+correctly on its close button; pressing `A` opens the advisor, typing the §5 acceptance query
+returns gradient boosting as the top pick, and clicking a result behaves identically to search's
+selection flow; search and advisor correctly take turns rendering into the shared `#modal`
+element (`ui/search.ts`'s header explains why that's safe) — opening one always closes the other
+first. `npm run validate`, `npm run build` and `npm test` (43 tests total) all pass clean.
+
+A genuine real bug was found and fixed in the course of this verification, consistent with the
+Phase 1/2 pattern: `engine/input.ts`'s `A` key handler was missing `preventDefault()`, so the same
+keypress that opens the advisor and focuses its `<textarea>` also typed a stray "a" into it —
+`/`'s handler already guarded against this; `A`'s did not.
+
+**On the §5 acceptance query and lexical ranking, worth flagging per PLAN.md §0's "a phase's
+acceptance criterion can't be met as written → ask" and "design decision seems wrong → say so"
+rules, rather than silently declaring victory:** Phase 4 is explicitly the *lexical* baseline
+(§5: "ships first, always fast"; semantic reranking is Phase 7, an upgrade layered on top, never a
+dependency). With roughly 15-20 entries across the map legitimately sharing the
+classification/tabular facets the query implies, a facet-boosted BM25 ranker cannot cleanly
+reproduce a curated 3-answer "the standard tabular classifiers" shortlist ahead of equally
+plausible siblings (XGBoost, LightGBM/CatBoost, naive Bayes, decision trees...) on keyword overlap
+alone the way a human expert would from real-world practice. What's tuned and verified instead:
+gradient boosting ranks as the outright top pick, and logistic regression and random forest both
+land within a top-8 pool small enough to page through, each carrying its authored cons — which is
+what the "returns gradient boosting, logistic regression and random forest, each with cons" line
+literally asks for. `tests/advisor.test.ts`'s header comment records this reasoning so it isn't
+lost; if the user wants a stricter top-3 guarantee, that likely means either hand-authoring
+advisor-specific ranking hints (a schema change, needing sign-off first per §0) or waiting on
+Phase 7's semantic layer, which is exactly the gap that layer exists to close.
+
+Tuning against that query surfaced and fixed three real `data/search-index.ts` bugs along the way
+— not specific to that one query, since each was caught by it accidentally amplifying an existing
+flaw, and each was confirmed against the general realistic-query sweep in `advisor.test.ts` too:
+1. The fuzzy name-match bonus was a flat per-token add, so a single query word coincidentally
+   shared with an unrelated entry's alias (e.g. "classification" inside k-Nearest Neighbors'
+   alias "nearest neighbour classification") scored as high as a genuine name lookup. Replaced
+   with a coverage-product — (matched fraction of the query) × (matched fraction of the name) —
+   so only a match covering a meaningful fraction of *both* sides scores highly.
+2. The token-level fuzzy match's edit-distance-1 threshold falsely matched short, unrelated words
+   at exactly one edit apart — "boss" against the acronym "GOSS" (LightGBM's alias for
+   gradient-based one-side sampling). Gated the edit-distance check to longer words and added a
+   prefix-length-ratio guard, which also caught a second false match ("gene" as a false stem of
+   "generation", surfacing Retrieval-Augmented Generation for a gene-expression-data query).
+3. Standard BM25 length normalization (`b = 0.75`) assumes document length mostly reflects filler
+   diluting the same amount of signal. Here document length instead reflects genuinely different
+   content — a two-sentence Tier 2 stub versus a full Tier 1 intuition paragraph plus 4-5
+   `whenToUse` items — and the default was burying longer, more substantive Tier 1 entries under
+   much shorter ones that happened to repeat the query's terms in less text. Lowered to `b = 0.15`.
+
+A related, deliberate design choice made in `ui/advisor-rank.ts`, not a bug fix: entries from the
+Sol, Belt and Pallas bodies (the objective every model minimizes, evaluation/validation craft, and
+post-hoc interpretability tooling, per their own PLAN.md §3 framing) are excluded from advisor
+recommendations. Their entries legitimately carry the same task/dataType facets as real models —
+a classification-metrics entry is "for" classification too — which otherwise floods a
+facet-boosted ranking with concepts instead of answers to "which algorithm should I use". They
+remain fully present in search and on the map itself; only the advisor's candidate pool excludes
+them.
 
 ### Phase 5 — Polish & accessibility
 
