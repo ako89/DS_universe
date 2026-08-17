@@ -710,10 +710,10 @@ mobile-device testing remain outstanding for whoever next has access to them.
 
 GitHub Pages is **already enabled** — do not reconfigure it.
 
-- [ ] `.github/workflows/deploy.yml` — `npm ci` → `validate` → `test` → `build` → deploy to Pages
+- [x] `.github/workflows/deploy.yml` — `npm ci` → `validate` → `test` → `build` → deploy to Pages
 - [ ] Confirm the Pages source is set to GitHub Actions (it may currently be branch-based)
-- [ ] Verify `base: '/DS_universe/'` — assets must resolve under the subpath, not `/`
-- [ ] OG/Twitter meta + preview image
+- [x] Verify `base: '/DS_universe/'` — assets must resolve under the subpath, not `/`
+- [x] OG/Twitter meta + preview image
 - [ ] Load the live URL and confirm KaTeX, content and deep links all work
 
 ### Phase 7 — Semantic advisor
