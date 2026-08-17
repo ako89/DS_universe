@@ -576,7 +576,7 @@ export const body = {
           'both) -- their Chinchilla model, 4x smaller than Gopher but trained on 4x more data at the same ' +
           'compute budget, outperformed it, showing most Kaplan-era large models were undertrained for their size.',
       },
-      related: ['transformer-block', 'self-attention'],
+      related: ['transformer-block', 'self-attention', 'mixture-of-experts'],
       references: {
         free: [
           {

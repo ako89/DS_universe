@@ -125,7 +125,7 @@ export const body = {
       // neighbours — the two penalised versions of this exact objective, the basis-expansion
       // version, and the generalisation that keeps the linear predictor but drops the Normal
       // error assumption. nova.ts's self-attention still links here, so that edge survives.
-      related: ['ridge-regression', 'lasso', 'polynomial-regression', 'generalized-linear-models'],
+      related: ['ridge-regression', 'lasso', 'polynomial-regression', 'generalized-linear-models', 'loss-functions'],
       references: {
         free: [{ title: 'scikit-learn user guide — Linear Models', url: 'https://scikit-learn.org/stable/modules/linear_model.html' }],
         papers: [
@@ -252,7 +252,7 @@ export const body = {
         'print(ridge.alpha_)   # alpha chosen by leave-one-out CV',
         'print(ridge.coef_)    # shrunk toward zero — but none exactly zero',
       ].join('\n'),
-      related: ['linear-regression', 'lasso', 'elastic-net', 'logistic-regression'],
+      related: ['linear-regression', 'lasso', 'elastic-net', 'logistic-regression', 'overfitting-and-regularization'],
       references: {
         free: [
           { title: 'scikit-learn user guide — Ridge regression and classification', url: 'https://scikit-learn.org/stable/modules/linear_model.html' },
@@ -389,7 +389,7 @@ export const body = {
         '',
         'kept = np.flatnonzero(lasso.coef_)      # indices of the surviving features',
       ].join('\n'),
-      related: ['linear-regression', 'ridge-regression', 'elastic-net', 'logistic-regression'],
+      related: ['linear-regression', 'ridge-regression', 'elastic-net', 'logistic-regression', 'feature-importance'],
       references: {
         free: [
           { title: 'scikit-learn user guide — Lasso', url: 'https://scikit-learn.org/stable/modules/linear_model.html' },
@@ -468,7 +468,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'continuous-value',
       },
-      related: ['lasso', 'ridge-regression', 'linear-regression'],
+      related: ['lasso', 'ridge-regression', 'linear-regression', 'overfitting-and-regularization'],
       references: {
         free: [
           { title: 'scikit-learn API — ElasticNet', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html' },
@@ -676,7 +676,7 @@ export const body = {
         '',
         'odds_ratios = np.exp(clf[-1].coef_[0])    # per standardized-unit odds ratio',
       ].join('\n'),
-      related: ['linear-regression', 'generalized-linear-models', 'discriminant-analysis', 'naive-bayes'],
+      related: ['linear-regression', 'generalized-linear-models', 'discriminant-analysis', 'naive-bayes', 'gradient-descent'],
       references: {
         free: [
           { title: 'scikit-learn API — LogisticRegression', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html' },
@@ -819,7 +819,7 @@ export const body = {
         '',
         '# TweedieRegressor(power=2, link="log") gives Gamma; power=0 gives Ridge.',
       ].join('\n'),
-      related: ['linear-regression', 'logistic-regression', 'ridge-regression'],
+      related: ['linear-regression', 'logistic-regression', 'ridge-regression', 'maximum-likelihood-and-map'],
       references: {
         free: [
           { title: 'scikit-learn user guide — Generalized Linear Models', url: 'https://scikit-learn.org/stable/modules/linear_model.html#generalized-linear-models' },

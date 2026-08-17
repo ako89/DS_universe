@@ -388,7 +388,7 @@ export const body = {
         'outputs, h_n = gru(x)                    # outputs: (16, 50, 64); h_n: (1, 16, 64)',
         '                                           # no cell state — one hidden state only',
       ].join('\n'),
-      related: ['lstm', 'vanilla-rnn-and-bptt', 'seq2seq-encoder-decoder'],
+      related: ['lstm', 'vanilla-rnn-and-bptt', 'seq2seq-encoder-decoder', 'vanishing-gradients-and-universal-approximation'],
       references: {
         free: [{ title: 'Dive into Deep Learning — Gated Recurrent Units (GRU)', url: 'https://d2l.ai/chapter_recurrent-modern/gru.html' }],
         papers: [
@@ -509,7 +509,7 @@ export const body = {
         '        dec_out, _ = self.decoder(self.embed(tgt_in), (h, c))',
         '        return self.out(dec_out)                     # per-step logits over the vocabulary',
       ].join('\n'),
-      related: ['bahdanau-luong-attention', 'lstm', 'gru'],
+      related: ['bahdanau-luong-attention', 'lstm', 'gru', 'encoder-decoder-architectures'],
       references: {
         free: [
           { title: 'Dive into Deep Learning — The Encoder-Decoder Architecture', url: 'https://d2l.ai/chapter_recurrent-modern/encoder-decoder.html' },
@@ -704,7 +704,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'generated-sequence',
       },
-      related: ['vanilla-rnn-and-bptt', 'seq2seq-encoder-decoder'],
+      related: ['vanilla-rnn-and-bptt', 'seq2seq-encoder-decoder', 'audio-models'],
       references: {
         free: [{ title: 'DeepMind — WaveNet: A Generative Model for Raw Audio', url: 'https://deepmind.google/discover/blog/wavenet-a-generative-model-for-raw-audio/' }],
         papers: [

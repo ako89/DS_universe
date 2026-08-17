@@ -634,7 +634,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'class-probabilities',
       },
-      related: ['resnet-and-skip-connections', 'lenet-to-alexnet-to-vgg', 'transfer-learning'],
+      related: ['resnet-and-skip-connections', 'lenet-to-alexnet-to-vgg', 'transfer-learning', 'scaling-laws'],
       references: {
         free: [
           {
@@ -749,6 +749,7 @@ export const body = {
         'resnet-and-skip-connections',
         'inception-and-efficientnet',
         'object-detection',
+        'supervised-fine-tuning',
       ],
       references: {
         free: [
@@ -882,6 +883,7 @@ export const body = {
         'resnet-and-skip-connections',
         'unet-and-segmentation',
         'transfer-learning',
+        'vision-language-models',
       ],
       references: {
         free: [
@@ -1037,7 +1039,7 @@ export const body = {
         '        x = torch.cat([x, skip], dim=1)           # the skip connection',
         '        return self.dec(x)',
       ].join('\n'),
-      related: ['convolution-and-pooling', 'resnet-and-skip-connections', 'object-detection'],
+      related: ['convolution-and-pooling', 'resnet-and-skip-connections', 'object-detection', 'diffusion-models-ddpm'],
       references: {
         free: [
           { title: 'Wikipedia — Image segmentation', url: 'https://en.wikipedia.org/wiki/Image_segmentation' },

@@ -358,7 +358,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'continuous-value',
       },
-      related: ['support-vector-machines', 'kernel-trick', 'gaussian-processes'],
+      related: ['support-vector-machines', 'kernel-trick', 'gaussian-processes', 'linear-regression'],
       references: {
         free: [{ title: 'scikit-learn user guide — Support Vector Regression', url: 'https://scikit-learn.org/stable/modules/svm.html#regression' }],
         papers: [

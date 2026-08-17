@@ -494,11 +494,18 @@ at its §3 tier, with `npm run validate` clean.
       `O(n^2)`-without-index half and the `minPts = 2 × dim` heuristic both trace to the entry's
       second citation (Schubert et al. 2017), self-extracted and confirmed, not the 1996 paper — the
       claim is genuinely sourced, just split across the entry's two references.
-- [ ] Cross-link pass — every entry already has ≥2 resolving `related` for Tier 1 / ≥1 for Tier 2
-      (mechanically enforced by `npm run validate`, which has passed after every batch). **What's
-      still open** is the qualitative half — "≥1 crossing bodies where sensible" — which was pursued
-      per-batch (each batch's agent briefs targeted specific, verified cross-body connections; see
-      the batch commit messages) but never swept as one dedicated audit across all 195 entries.
+- [x] Cross-link pass — every entry already has ≥2 resolving `related` for Tier 1 / ≥1 for Tier 2
+      (mechanically enforced by `npm run validate`, which has passed after every batch). The
+      qualitative half — "≥1 crossing bodies where sensible" — was audited as one dedicated pass
+      across all 195 entries via a small throwaway script (dynamically import every body module,
+      build an `entryId → bodyId` map, flag any entry whose `related` ids all resolve to its own
+      body). 50 of 195 entries had only same-body links; each was given one genuine, individually
+      reasoned cross-body connection (e.g. `terra::id3-c45` → `feature-importance`,
+      `jupiter::gaussian-mixture-models` → `maximum-likelihood-and-map`,
+      `vulcan::object-detection` → `vision-language-models`). Re-running the audit afterward
+      confirmed 0 entries without a cross-body link and 0 unresolved `related` ids. The change is
+      surgical — 19 files, 50 `related`-array insertions, nothing else touched — and
+      `validate`/`build`/`test` all pass clean.
 - [x] `npm run check-links` — **tool built** (`tools/check-links.ts`; the `check-links` npm script
       already existed as a placeholder since Phase 0). Fetches every citation URL across all content
       modules with a real browser User-Agent, bounded concurrency and a 25s timeout; treats HTTP 403

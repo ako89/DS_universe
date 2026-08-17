@@ -270,7 +270,7 @@ export const body = {
         handlesCategorical: true,
         outputType: 'class-label-or-ruleset',
       },
-      related: ['decision-trees', 'tree-pruning', 'rule-induction'],
+      related: ['decision-trees', 'tree-pruning', 'rule-induction', 'feature-importance'],
       references: {
         free: [
           {
@@ -676,7 +676,7 @@ export const body = {
         handlesCategorical: true,
         outputType: 'ordered-rule-list',
       },
-      related: ['decision-trees', 'id3-c45'],
+      related: ['decision-trees', 'id3-c45', 'association-rules'],
       references: {
         free: [
           {

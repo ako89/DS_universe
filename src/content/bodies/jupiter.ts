@@ -386,7 +386,7 @@ export const body = {
         'n_clusters = len(set(labels)) - (1 if -1 in labels else 0)',
         'n_noise = list(labels).count(-1)',
       ].join('\n'),
-      related: ['hdbscan', 'k-means', 'isolation-forest', 'optics-and-mean-shift'],
+      related: ['hdbscan', 'k-means', 'isolation-forest', 'optics-and-mean-shift', 'approximate-nearest-neighbors'],
       references: {
         free: [{ title: 'scikit-learn user guide — DBSCAN', url: 'https://scikit-learn.org/stable/modules/clustering.html#dbscan' }],
         papers: [
@@ -515,7 +515,7 @@ export const body = {
         '# unlike DBSCAN, no eps to tune — density scale is handled internally',
         'n_clusters = len(set(labels)) - (1 if -1 in labels else 0)',
       ].join('\n'),
-      related: ['dbscan', 'k-means', 'optics-and-mean-shift'],
+      related: ['dbscan', 'k-means', 'optics-and-mean-shift', 'distance-metrics'],
       references: {
         free: [
           { title: 'scikit-learn user guide — HDBSCAN', url: 'https://scikit-learn.org/stable/modules/clustering.html#hdbscan' },
@@ -592,7 +592,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'cluster-labels',
       },
-      related: ['dbscan', 'k-means'],
+      related: ['dbscan', 'k-means', 'kernel-density-estimation'],
       references: {
         free: [
           { title: 'scikit-learn user guide — OPTICS', url: 'https://scikit-learn.org/stable/modules/clustering.html#optics' },
@@ -723,7 +723,7 @@ export const body = {
         'gmm = GaussianMixture(n_components=best_k, n_init=5, random_state=0).fit(X)',
         'proba = gmm.predict_proba(X)           # soft assignment, one row per point',
       ].join('\n'),
-      related: ['k-means', 'hierarchical-clustering', 'one-class-detection-and-lof'],
+      related: ['k-means', 'hierarchical-clustering', 'one-class-detection-and-lof', 'maximum-likelihood-and-map'],
       references: {
         free: [{ title: 'scikit-learn user guide — Gaussian mixture models', url: 'https://scikit-learn.org/stable/modules/mixture.html' }],
         papers: [
@@ -792,7 +792,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'cluster-labels',
       },
-      related: ['k-means', 'hierarchical-clustering'],
+      related: ['k-means', 'hierarchical-clustering', 'graph-convolutional-networks'],
       references: {
         free: [{ title: 'scikit-learn user guide — Spectral clustering', url: 'https://scikit-learn.org/stable/modules/clustering.html#spectral-clustering' }],
         papers: [
@@ -1062,7 +1062,7 @@ export const body = {
         handlesCategorical: true,
         outputType: 'rule-list',
       },
-      related: ['k-means', 'dbscan'],
+      related: ['k-means', 'dbscan', 'rule-induction'],
       references: {
         free: [
           { title: 'mlxtend user guide — Apriori', url: 'http://rasbt.github.io/mlxtend/user_guide/frequent_patterns/apriori/' },

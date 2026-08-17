@@ -737,7 +737,7 @@ export const body = {
         'log_likelihood, hidden_states = model.decode(X_test)   # Viterbi',
         'print(model.transmat_)                  # fitted state-to-state transition matrix',
       ].join('\n'),
-      related: ['bayesian-networks', 'mcmc', 'variational-inference', 'conditional-random-fields'],
+      related: ['bayesian-networks', 'mcmc', 'variational-inference', 'conditional-random-fields', 'vanilla-rnn-and-bptt'],
       references: {
         free: [{ title: 'hmmlearn — Tutorial', url: 'https://hmmlearn.readthedocs.io/en/latest/tutorial.html' }],
         papers: [

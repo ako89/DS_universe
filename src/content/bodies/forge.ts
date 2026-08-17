@@ -334,7 +334,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'adapter-or-prefix-weights',
       },
-      related: ['lora-and-qlora', 'supervised-fine-tuning'],
+      related: ['lora-and-qlora', 'supervised-fine-tuning', 'transformer-block'],
       references: {
         free: [{ title: 'Hugging Face PEFT — Soft prompts (prompt tuning, prefix tuning, P-tuning)', url: 'https://huggingface.co/docs/peft/main/en/conceptual_guides/prompting' }],
         papers: [
@@ -729,7 +729,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'aligned-policy',
       },
-      related: ['rlhf', 'dpo'],
+      related: ['rlhf', 'dpo', 'red-teaming-and-jailbreaks'],
       references: {
         free: [{ title: 'Anthropic — Constitutional AI: Harmlessness from AI Feedback', url: 'https://www.anthropic.com/research/constitutional-ai-harmlessness-from-ai-feedback' }],
         papers: [

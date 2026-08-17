@@ -360,7 +360,7 @@ export const body = {
         handlesCategorical: true,
         outputType: 'inductive-node-embeddings',
       },
-      related: ['graph-convolutional-networks', 'graph-attention-networks', 'graph-representation-and-message-passing'],
+      related: ['graph-convolutional-networks', 'graph-attention-networks', 'graph-representation-and-message-passing', 'word2vec-and-glove'],
       references: {
         free: [
           { title: 'GraphSAGE project page (Stanford SNAP)', url: 'http://snap.stanford.edu/graphsage/' },
@@ -663,7 +663,7 @@ export const body = {
         handlesCategorical: true,
         outputType: 'edge-scores-and-graph-level-embeddings',
       },
-      related: ['graph-convolutional-networks', 'graph-representation-and-message-passing', 'node2vec-and-deepwalk'],
+      related: ['graph-convolutional-networks', 'graph-representation-and-message-passing', 'node2vec-and-deepwalk', 'convolution-and-pooling'],
       references: {
         free: [{ title: 'PyTorch Geometric — GAE (Graph Auto-Encoder)', url: 'https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.GAE.html' }],
         papers: [

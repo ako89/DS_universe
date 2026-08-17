@@ -287,7 +287,7 @@ export const body = {
         '    observation = run_tool(step.action, step.action_input)   # e.g. run_tool("search", "...")',
         '    transcript += f"\\nObservation: {observation}\\n"',
       ].join('\n'),
-      related: ['function-tool-calling', 'planning-and-decomposition', 'computer-use-and-browser-agents'],
+      related: ['function-tool-calling', 'planning-and-decomposition', 'computer-use-and-browser-agents', 'chain-of-thought-faithfulness'],
       references: {
         free: [
           {
@@ -465,7 +465,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'tool-and-resource-access',
       },
-      related: ['function-tool-calling', 'multi-agent-systems'],
+      related: ['function-tool-calling', 'multi-agent-systems', 'retrieval-augmented-generation'],
       references: {
         free: [
           { title: 'Anthropic — Introducing the Model Context Protocol', url: 'https://www.anthropic.com/news/model-context-protocol' },
