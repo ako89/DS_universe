@@ -44,6 +44,19 @@ export const BASE_PERIOD_S = 180;
  *  at. Same 1/sqrt(orbitRadius) scaling as planet periods. */
 export const MOON_BASE_PERIOD_S = 20;
 
+/** Zoom level at and below which orbital motion runs at full speed — comfortably above the
+ *  default whole-system framing, so the map still feels alive when zoomed out. Above it, motion
+ *  eases toward MOTION_MIN_SCALE as zoom approaches ZOOM_MAX (see engine/scene.ts's
+ *  motionTimeScale): zoomed-in bodies and moons are exactly what's hardest to click before they
+ *  drift out of frame, so speed tapers off continuously rather than snapping to a hard stop. */
+export const MOTION_SLOWDOWN_ZOOM_START = 0.6;
+
+/** Slowest orbital speed multiplier, reached at ZOOM_MAX. Kept above zero rather than a full
+ *  freeze: a fully zoomed-in body still visibly drifts, just slowly enough to click before it
+ *  moves — a full freeze already exists separately (the card being open, or
+ *  prefers-reduced-motion) and this isn't meant to duplicate it. */
+export const MOTION_MIN_SCALE = 0.04;
+
 export const STAR_LAYERS = [
   { count: 700, parallax: 0.15, size: [0.6, 1.2], alpha: [0.25, 0.55] },
   { count: 320, parallax: 0.4, size: [0.9, 1.8], alpha: [0.35, 0.75] },

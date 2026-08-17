@@ -594,6 +594,27 @@ them.
 
 ### Phase 5 — Polish & accessibility
 
+- [x] **Orbital motion eases off as you zoom in**, so bodies/moons don't drift out of frame
+      before you can click them. `engine/scene.ts`'s new `motionTimeScale(zoom)` scales `dt`
+      before it reaches `updateScene` (that function's own ENGINE_SPEC §9 contract is untouched):
+      full speed at/below `MOTION_SLOWDOWN_ZOOM_START`, smoothstep-eased down to
+      `MOTION_MIN_SCALE` at `ZOOM_MAX` — continuous, no snap, never a full stop (a full freeze
+      already exists separately for the card being open / `prefers-reduced-motion`). User-reported
+      ("bodies leave the frame before I can click"), not from the original checklist. Verified
+      with headless Playwright: hovering a moon zoomed into Jupiter, its tooltip stays valid
+      2.5s+ later without re-hovering, and a click at that same fixed screen position opens the
+      right card; Mercury still visibly moves at the default whole-system zoom. Unit-tested in
+      `tests/scene.test.ts`.
+- [x] **Sol/Nova no longer show background starfield stars through their disc.** Root cause:
+      `render/star.ts`'s `drawStar` set `ctx.globalCompositeOperation = 'lighter'` once for the
+      corona and never reset it before filling the opaque core circle — additive compositing only
+      ever adds light to what's beneath, it never occludes it, so a bright starfield star sitting
+      under the core stayed visible right through a fill that was supposed to be solid. Fixed by
+      switching back to `source-over` for the core fill only; the corona/flare layers stay
+      additive (that's the intended glow). Also nudged Sol/Nova's saturation and mid/outer corona
+      alpha up for more visual "pop" against the starfield, per user request. User-reported, not
+      from the original checklist. Verified visually (before/after screenshots, zoomed on Sol) —
+      the "before" render shows starfield dots inside the corona; "after" does not.
 - [ ] Full keyboard traversal; visible focus rings; no focus traps
 - [ ] Screen reader: labels and cards in the a11y tree; populate `#a11y-summary`
 - [ ] Contrast audit — body copy ≥ 4.5:1 against the panel fill

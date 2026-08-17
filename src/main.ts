@@ -11,7 +11,7 @@
 import { BG, ZOOM_MAX, ZOOM_MIN } from './engine/constants.ts';
 import { createCanvas, startLoop } from './engine/canvas.ts';
 import { Camera } from './engine/camera.ts';
-import { buildScene, updateScene } from './engine/scene.ts';
+import { buildScene, motionTimeScale, updateScene } from './engine/scene.ts';
 import { Picking } from './engine/picking.ts';
 import { attachInput } from './engine/input.ts';
 import { createStarfield } from './render/starfield.ts';
@@ -172,7 +172,10 @@ let clock = 0; // elapsed time fed to time-driven visuals (twinkle, pulse, gas d
 startLoop((dt, t) => {
   const motionActive = !reduceMotion && !card.isOpen();
   camera.update(reduceMotion ? 0 : dt);
-  updateScene(bodies, dt, !motionActive);
+  // Zoomed-in bodies/moons ease toward near-stationary (motionTimeScale) so they don't drift out
+  // of frame before they can be clicked; the card-open/reduced-motion freeze above still wins
+  // outright via `paused` regardless of zoom.
+  updateScene(bodies, dt * motionTimeScale(camera.zoom), !motionActive);
   if (motionActive) clock = t;
 
   ctx.fillStyle = BG;

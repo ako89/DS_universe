@@ -21,7 +21,7 @@
 import { system } from '../content/system.ts';
 import type { BodyPlacement } from '../content/system.ts';
 import { bodies as contentBodies } from '../data/registry.ts';
-import { BASE_PERIOD_S, MOON_BASE_PERIOD_S, TILT } from './constants.ts';
+import { BASE_PERIOD_S, MOON_BASE_PERIOD_S, MOTION_MIN_SCALE, MOTION_SLOWDOWN_ZOOM_START, TILT, ZOOM_MAX } from './constants.ts';
 import { hashSeed, mulberry32 } from './rng.ts';
 
 export interface SceneMoon {
@@ -165,6 +165,18 @@ export function buildScene(): SceneBody[] {
   }
 
   return scene;
+}
+
+/** Orbital speed multiplier for the current camera zoom: 1 (full speed) at or below
+ *  MOTION_SLOWDOWN_ZOOM_START, easing down to MOTION_MIN_SCALE at ZOOM_MAX via a smoothstep so
+ *  the transition has no visible snap. Callers scale `dt` by this before passing it to
+ *  updateScene, rather than updateScene taking zoom itself — keeps updateScene's own contract
+ *  (ENGINE_SPEC §9) untouched; this is a Phase 5 addition on top of it. */
+export function motionTimeScale(zoom: number): number {
+  if (zoom <= MOTION_SLOWDOWN_ZOOM_START) return 1;
+  const t = Math.min(1, (zoom - MOTION_SLOWDOWN_ZOOM_START) / (ZOOM_MAX - MOTION_SLOWDOWN_ZOOM_START));
+  const eased = t * t * (3 - 2 * t);
+  return 1 - eased * (1 - MOTION_MIN_SCALE);
 }
 
 export function updateScene(bodies: SceneBody[], dt: number, paused: boolean): void {
