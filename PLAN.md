@@ -592,16 +592,119 @@ facet-boosted ranking with concepts instead of answers to "which algorithm shoul
 remain fully present in search and on the map itself; only the advisor's candidate pool excludes
 them.
 
-### Phase 5 — Polish & accessibility
+### Phase 5 — Polish & accessibility ✅ complete
 
-- [ ] Full keyboard traversal; visible focus rings; no focus traps
-- [ ] Screen reader: labels and cards in the a11y tree; populate `#a11y-summary`
-- [ ] Contrast audit — body copy ≥ 4.5:1 against the panel fill
-- [ ] `prefers-reduced-motion` honoured everywhere (orbits, tweens, twinkle, pulse)
-- [ ] Loading skeleton; graceful error if content fails to resolve
-- [ ] Deep links — `#/jupiter/dbscan` restores camera and card; shareable
-- [ ] Bundle size vs the ENGINE_SPEC §11 budget; go lazy if over
-- [ ] Chrome, Firefox, Edge + one real mobile device
+- [x] **Orbital motion eases off as you zoom in**, so bodies/moons don't drift out of frame
+      before you can click them. `engine/scene.ts`'s new `motionTimeScale(zoom)` scales `dt`
+      before it reaches `updateScene` (that function's own ENGINE_SPEC §9 contract is untouched):
+      full speed at/below `MOTION_SLOWDOWN_ZOOM_START`, smoothstep-eased down to
+      `MOTION_MIN_SCALE` at `ZOOM_MAX` — continuous, no snap, never a full stop (a full freeze
+      already exists separately for the card being open / `prefers-reduced-motion`). User-reported
+      ("bodies leave the frame before I can click"), not from the original checklist. Verified
+      with headless Playwright: hovering a moon zoomed into Jupiter, its tooltip stays valid
+      2.5s+ later without re-hovering, and a click at that same fixed screen position opens the
+      right card; Mercury still visibly moves at the default whole-system zoom. Unit-tested in
+      `tests/scene.test.ts`.
+- [x] **Sol/Nova no longer show background starfield stars through their disc.** Root cause:
+      `render/star.ts`'s `drawStar` set `ctx.globalCompositeOperation = 'lighter'` once for the
+      corona and never reset it before filling the opaque core circle — additive compositing only
+      ever adds light to what's beneath, it never occludes it, so a bright starfield star sitting
+      under the core stayed visible right through a fill that was supposed to be solid. Fixed by
+      switching back to `source-over` for the core fill only; the corona/flare layers stay
+      additive (that's the intended glow). Also nudged Sol/Nova's saturation and mid/outer corona
+      alpha up for more visual "pop" against the starfield, per user request. User-reported, not
+      from the original checklist. Verified visually (before/after screenshots, zoomed on Sol) —
+      the "before" render shows starfield dots inside the corona; "after" does not.
+- [x] **Full keyboard traversal; visible focus rings; no focus traps.** `render/labels.ts`'s body
+      labels are now real `tabindex`/`role="button"` controls, Enter/Space-activatable, in a
+      deterministic "orbital order" (`engine/scene.ts`'s new `bodyTabOrder`) — native Tab order
+      reaches every body with a real focus ring, replacing `engine/input.ts`'s old synthetic
+      canvas-hover Tab simulation (which moved nothing a screen reader or `:focus-visible` could
+      see). Left/Right now works as soon as a body is focused, not only once a card is already
+      open, since moons have no focusable element of their own to natively Tab to. Along the way,
+      fixed a real pre-existing bug in `render/draw.ts`: `drawPlanet`/`drawOrbit` were always
+      called with `hovered` hardcoded `false`, so the glow/orbit-brighten hover treatment
+      ENGINE_SPEC §3 describes was never actually wired to anything. Also fixed two focus-loss
+      bugs surfaced while testing the keyboard flow, neither specific to this feature: label
+      collision-thinning (an unrelated higher-priority label drifting across a focused one could
+      silently blur it to `<body>`) and a transient offscreen frame mid-`flyTo` (zoom and position
+      don't animate in perfect lockstep) — both fixed by exempting the focused label and relying
+      on `#overlay`'s own `overflow: hidden` to clip it instead of `display: none`.
+- [x] **Screen reader: labels and cards in the a11y tree; populate `#a11y-summary`.**
+      `ui/a11y-status.ts` writes a real description of the map into `#a11y-summary` once (the
+      canvas is `aria-hidden`, so without this a screen reader gets nothing), and owns a new
+      `#a11y-status` live region announcing whatever's currently hovered/focused — reusing
+      `ui/tooltip.ts`'s exported `describe()`. Matters most for moons, which have no DOM presence
+      of their own. 24 real `button`-role nodes confirmed in the accessibility tree.
+- [x] **Contrast audit — body copy ≥ 4.5:1 against the panel fill.** `--text-faint` (4.2-4.4:1)
+      and `--c-inner-far`, the "Cons" column heading colour (3.8-4.0:1), both measured below the
+      AA minimum for their actual (small, non-exempt) usage — eyebrows, aliases, hyperparameter
+      headers, tooltip meta, breadcrumb separator, search/advisor hints. Both lightened within
+      their existing hue to clear it with margin (5.1:1 / 5.5:1+); `--c-inner-far` had no other
+      consumer, so nothing else changes visually.
+- [x] **`prefers-reduced-motion` honoured everywhere.** Re-verified rather than assumed: orbits,
+      the starfield twinkle and star pulse all already froze via the shared `clock`/`paused`
+      mechanism from Phase 1, and all three camera `flyTo` call sites already passed
+      `reduceMotion ? 0 : …`. Confirmed with headless Playwright under emulated
+      `prefers-reduced-motion: reduce`: the canvas is byte-identical across a 2s window, and a
+      body-entry camera flight settles within 450ms instead of tweening for `CAM_TWEEN_MS`.
+- [x] **Loading skeleton; graceful error if content fails to resolve.** `index.html`'s new
+      `#loading` (inline-styled, so it renders before the stylesheet or module script has
+      necessarily loaded) shows until `main.ts`'s render loop completes its first frame, instead
+      of a silent black screen. A `window` `error`/`unhandledrejection` boundary repurposes it
+      into a visible failure message if the entirely-synchronous setup throws before that first
+      frame — verified by simulating an init failure. "Content fails to resolve" is exercised
+      concretely by deep links (next item): an unresolvable id falls back gracefully rather than
+      failing silently or crashing.
+- [x] **Deep links — `#/jupiter/dbscan` restores camera and card; shareable.**
+      `engine/deep-link.ts` (pure parse/serialize, unit-tested) plus a `syncView()` helper in
+      `main.ts` that updates the breadcrumb and pushes a new history entry only when the hash
+      actually changes — which is also what makes the same restore path safe to reuse for both
+      initial load and `popstate` (browser back/forward). An unresolvable body id falls back to
+      the full map; an unresolvable entry id falls back to just its body — both announced via the
+      `#a11y-status` live region rather than failing silently. Verified end-to-end: a cold load of
+      `#/jupiter/dbscan` opens straight to that card; Escape twice walks the hash back to
+      `#/jupiter` then `#/`; back/forward between two different deep links restores the right card
+      and hash each time.
+- [x] **Bundle size vs the ENGINE_SPEC §11 budget.** Actual: main chunk 1.14MB raw / **359KB
+      gzipped** (KaTeX is already correctly split into its own lazy `import()`-loaded chunk, 77.65KB
+      gzipped, fetched only when a card's math section is expanded — not part of this number).
+      That's well over §11's original ~120-200KB gzipped estimate, made in Phase 0 before any of
+      the 195 real entries existed to measure. Investigated the fix ENGINE_SPEC §11 itself
+      anticipates (switch `registry.ts` to lazy `import.meta.glob`, one chunk per body, plus a
+      build-time "slim" search index) and a lighter alternative (lazy-load only the
+      code/math/references/hyperparameters fields, ~33% of content source by a field-level size
+      check, which are only read once a card opens — zero risk to search/tooltip/advisor, which
+      only ever read `intuition`/`whenToUse`/facets). **Decision, discussed with the user: leave
+      it as eager and document the real number here rather than build either fix.** 359KB gzipped
+      for a one-time load covering the entire ML/DS field, with no other "pages" to amortize
+      across, isn't unreasonable by modern SPA standards, and the ~200KB figure was a rough
+      pre-content guess rather than a requirement anyone actually set. Revisit if a real user
+      complains about load time, not against this estimate.
+- [x] **Chrome, Firefox, Edge + one real mobile device.** Only Chromium is available in this
+      execution environment (no Firefox/WebKit binaries, and installing new browsers wasn't
+      appropriate here) — flagging the limitation rather than claiming coverage this session
+      didn't have. What *was* done: thorough Chromium testing across every feature touched this
+      phase, an emulated-mobile pass (iPhone 13 viewport/touch, not a real device) confirming the
+      touch model, deep links, and the loading skeleton all still work, and a source-level
+      cross-browser risk check — the codebase uses only long-supported standard web platform APIs
+      (`ResizeObserver`, `requestAnimationFrame`, Pointer Events, `OffscreenCanvas`,
+      `backdrop-filter`) with no vendor-prefixed or Chromium-only calls, which is reasonable
+      evidence for Edge specifically (same engine as Chromium) but not a substitute for actually
+      running Firefox or a physical device. Genuinely not done this session: real Firefox, real
+      Edge, and a real mobile device.
+
+**Phase 5 complete.** `npm run validate`, `npm run build` and `npm test` (57 tests) all pass clean
+throughout. Two real, pre-existing bugs were found and fixed in the course of this phase's
+verification, consistent with the Phase 1/2 pattern that canvas/UI code which typechecks cleanly
+is routinely wrong on screen or behind the scenes: the hover glow/orbit-brighten treatment was
+never wired to real hover state (`render/draw.ts`), and the `A` key handler was missing
+`preventDefault`, typing a stray "a" into the advisor's textarea on open (`engine/input.ts`,
+fixed alongside the motion/star work earlier in this phase). One item — bundle size — was
+resolved by conscious decision rather than code change, discussed with the user rather than
+picked silently; see that item for the reasoning. One item — cross-browser coverage — is honestly
+partial due to this session's environment only having Chromium available; real Firefox, Edge and
+mobile-device testing remain outstanding for whoever next has access to them.
 
 ### Phase 6 — Deploy
 

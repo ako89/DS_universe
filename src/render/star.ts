@@ -36,18 +36,21 @@ function buildCache(ctx: CanvasRenderingContext2D, star: StarVisual, radiusBucke
   const r = radiusBucket;
   const hue = star.hue;
 
+  // Saturation and mid/outer alpha nudged up from the original 85-90%/0.18-0.5 so Sol and Nova
+  // read as more vivid against the starfield (docs/ENGINE_SPEC.md §2's "additive radial
+  // gradients"), rather than the softer, easily-lost-in-the-starfield version this replaced.
   const core = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-  core.addColorStop(0, `hsl(${hue}, 85%, 95%)`);
-  core.addColorStop(0.65, `hsl(${hue}, 90%, 78%)`);
-  core.addColorStop(1, `hsla(${hue}, 90%, 65%, 0)`);
+  core.addColorStop(0, `hsl(${hue}, 95%, 95%)`);
+  core.addColorStop(0.65, `hsl(${hue}, 100%, 78%)`);
+  core.addColorStop(1, `hsla(${hue}, 100%, 65%, 0)`);
 
   const mid = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 2.2);
-  mid.addColorStop(0, `hsla(${hue}, 90%, 70%, 0.5)`);
-  mid.addColorStop(1, `hsla(${hue}, 90%, 70%, 0)`);
+  mid.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.62)`);
+  mid.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
 
   const outer = ctx.createRadialGradient(0, 0, r * 1.5, 0, 0, r * 4.5);
-  outer.addColorStop(0, `hsla(${hue}, 85%, 65%, 0.18)`);
-  outer.addColorStop(1, `hsla(${hue}, 85%, 65%, 0)`);
+  outer.addColorStop(0, `hsla(${hue}, 95%, 65%, 0.26)`);
+  outer.addColorStop(1, `hsla(${hue}, 95%, 65%, 0)`);
 
   const flare = ctx.createLinearGradient(0, 0, r * 3.2, 0);
   flare.addColorStop(0, `hsla(${hue}, 90%, 92%, 0.6)`);
@@ -124,6 +127,12 @@ export function drawStar(ctx: CanvasRenderingContext2D, camera: Camera, star: St
 
   drawFlareSpikes(ctx, r, visuals.flare, pulse);
 
+  // Back to normal compositing for the core: 'lighter' only ever adds light to what's already
+  // there, it never occludes it, so a background starfield star sitting under the disc stayed
+  // visible right through a "solid", full-alpha core. The corona/flare layers above are additive
+  // on purpose (that's the glow), but the core disc itself needs to actually paint over anything
+  // behind it.
+  ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
   ctx.fillStyle = visuals.core;
   ctx.beginPath();

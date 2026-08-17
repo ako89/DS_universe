@@ -21,8 +21,37 @@
     -->
     <canvas id="scene" aria-hidden="true"></canvas>
 
-    <!-- Text alternative to the canvas for screen readers. Populated in Phase 5. -->
+    <!--
+      Shown until main.ts renders its first frame, and repurposed as a fatal-error message if
+      setup throws before then (see main.ts's error boundary) — the canvas and every other
+      element above are otherwise silent and empty until JS runs, which reads as broken rather
+      than loading. Inline styles rather than main.css: this must render the instant the HTML
+      parses, before the stylesheet (or the module script) has necessarily loaded.
+    -->
+    <div
+      id="loading"
+      role="status"
+      style="
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #05060d;
+        color: #a8adc0;
+        font: 15px/1.6 ui-sans-serif, system-ui, sans-serif;
+      "
+    >
+      Loading DS Universe…
+    </div>
+
+    <!-- Text alternative to the canvas for screen readers: a one-time overview of the map. -->
     <div id="a11y-summary" class="visually-hidden" role="region" aria-label="Map contents"></div>
+
+    <!-- Announces whatever's currently hovered/keyboard-focused — the canvas has no DOM presence
+         of its own for a screen reader to read, see ui/a11y-status.ts. -->
+    <div id="a11y-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
 
     <div id="overlay"></div>
     <div id="card" role="complementary" aria-label="Algorithm detail"></div>
