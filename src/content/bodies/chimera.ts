@@ -465,7 +465,7 @@ export const body = {
       // dcgan-stylegan-cyclegan are the direct architectural/training advances built on this
       // framework; variational-autoencoders and normalizing-flows are the two genuinely different
       // paradigms this entry's whenNotToUse points toward.
-      related: ['dcgan-stylegan-cyclegan', 'variational-autoencoders', 'normalizing-flows'],
+      related: ['dcgan-stylegan-cyclegan', 'variational-autoencoders', 'normalizing-flows', 'loss-functions'],
       references: {
         free: [{ title: 'Dive into Deep Learning — Generative Adversarial Networks', url: 'https://d2l.ai/chapter_generative-adversarial-networks/gan.html' }],
         papers: [
@@ -621,7 +621,7 @@ export const body = {
       // autoregressive-generation is a genuine sibling in the exact-likelihood family: autoregressive
       // flows (MAF/IAF) are built directly from autoregressive factorizations, and both compete for
       // the tractable-likelihood niche neither VAEs nor GANs fill.
-      related: ['variational-autoencoders', 'gans', 'autoregressive-generation'],
+      related: ['variational-autoencoders', 'gans', 'autoregressive-generation', 'ica-and-factor-analysis'],
       references: {
         free: [{ title: "Lil'Log — Flow-based Deep Generative Models", url: 'https://lilianweng.github.io/posts/2018-10-13-flow-models/' }],
         papers: [

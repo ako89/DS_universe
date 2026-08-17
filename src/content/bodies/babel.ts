@@ -147,7 +147,7 @@ export const body = {
         'output = tokenizer.encode("Hello, y\'all!")',
         "print(output.tokens)   # e.g. ['Hello', ',', 'y', \"'\", 'all', '!']",
       ].join('\n'),
-      related: ['wordpiece-and-sentencepiece', 'tokenizer-pathologies', 'contextual-embeddings'],
+      related: ['wordpiece-and-sentencepiece', 'tokenizer-pathologies', 'contextual-embeddings', 'transformer-block'],
       references: {
         free: [
           {
@@ -224,7 +224,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'subword-token-ids',
       },
-      related: ['byte-pair-encoding', 'contextual-embeddings'],
+      related: ['byte-pair-encoding', 'contextual-embeddings', 'bert-lineage'],
       references: {
         free: [
           {
@@ -678,7 +678,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'failure-mode-catalogue',
       },
-      related: ['byte-pair-encoding', 'wordpiece-and-sentencepiece'],
+      related: ['byte-pair-encoding', 'wordpiece-and-sentencepiece', 'gpt-lineage'],
       references: {
         free: [
           { title: 'Simon Willison — Understanding GPT tokenizers', url: 'https://simonwillison.net/2023/Jun/8/gpt-tokenizers/' },

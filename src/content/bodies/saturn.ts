@@ -255,7 +255,7 @@ export const body = {
       },
       // Cross-body: Uranus's "the kernel trick" entry (not yet written) is the natural link once it
       // exists — this is the same machinery SVMs use, applied to PCA instead of a margin.
-      related: ['pca', 'svd-and-truncated-svd'],
+      related: ['pca', 'svd-and-truncated-svd', 'kernel-trick'],
       references: {
         free: [
           {
@@ -379,7 +379,7 @@ export const body = {
         '',
         'print(svd.explained_variance_ratio_.sum())    # variance captured by the 100 components',
       ].join('\n'),
-      related: ['pca', 'nmf', 'mds-isomap-and-lle'],
+      related: ['pca', 'nmf', 'mds-isomap-and-lle', 'linear-regression'],
       references: {
         free: [
           {
@@ -525,7 +525,7 @@ export const body = {
       ].join('\n'),
       // Cross-link pass: Lee & Seung's parts-based factorization is also used for topic modelling
       // alongside latent-dirichlet-allocation (Neptune, not yet written) — add once available.
-      related: ['pca', 'svd-and-truncated-svd', 'ica-and-factor-analysis'],
+      related: ['pca', 'svd-and-truncated-svd', 'ica-and-factor-analysis', 'latent-dirichlet-allocation'],
       references: {
         free: [
           {
@@ -608,7 +608,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'continuous-embedding',
       },
-      related: ['pca', 'nmf'],
+      related: ['pca', 'nmf', 'normalizing-flows'],
       references: {
         free: [
           {

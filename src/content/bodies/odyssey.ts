@@ -250,7 +250,7 @@ export const body = {
         '    Q = [[R[s, a] + gamma * P[s, a] @ V for a in range(n_actions)] for s in range(n_states)]',
         '    return V, np.argmax(Q, axis=1)',
       ].join('\n'),
-      related: ['mdps-and-bellman-equation', 'q-learning-and-sarsa', 'mcts-and-alphazero'],
+      related: ['mdps-and-bellman-equation', 'q-learning-and-sarsa', 'mcts-and-alphazero', 'kalman-filters-and-state-space-models'],
       references: {
         free: [
           { title: 'UC Berkeley CS 188 — Value Iteration', url: 'https://inst.eecs.berkeley.edu/~cs188/textbook/mdp/value-iteration.html' },
@@ -383,7 +383,7 @@ export const body = {
         '        Q[s, a] += alpha * (target - Q[s, a])',
         '        s, a = s2, (a2 if algorithm == "sarsa" else epsilon_greedy(Q[s2], epsilon))',
       ].join('\n'),
-      related: ['mdps-and-bellman-equation', 'value-and-policy-iteration', 'dqn', 'multi-armed-bandits'],
+      related: ['mdps-and-bellman-equation', 'value-and-policy-iteration', 'dqn', 'multi-armed-bandits', 'gradient-descent'],
       references: {
         free: [{ title: 'UC Berkeley CS 188 — Model-Free Learning', url: 'https://inst.eecs.berkeley.edu/~cs188/textbook/rl/mfl.html' }],
         papers: [
@@ -909,7 +909,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'policy-continuous-or-discrete',
       },
-      related: ['ppo', 'actor-critic', 'dqn'],
+      related: ['ppo', 'actor-critic', 'dqn', 'optimizers'],
       references: {
         free: [
           { title: 'OpenAI Spinning Up — Trust Region Policy Optimization', url: 'https://spinningup.openai.com/en/latest/algorithms/trpo.html' },

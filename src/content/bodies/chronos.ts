@@ -313,7 +313,7 @@ export const body = {
       ].join('\n'),
       // kalman-filters-and-state-space-models cross-link: statsmodels implements ETS as a linear
       // Gaussian state-space model, fit via the same Kalman-filter recursion as SARIMAX.
-      related: ['arima-and-sarima', 'stl-decomposition', 'kalman-filters-and-state-space-models'],
+      related: ['arima-and-sarima', 'stl-decomposition', 'kalman-filters-and-state-space-models', 'maximum-likelihood-and-map'],
       references: {
         free: [
           { title: 'Forecasting: Principles and Practice — Exponential smoothing', url: 'https://otexts.com/fpp3/expsmooth.html' },

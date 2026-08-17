@@ -20,6 +20,22 @@
  * for the per-entry source list. Every reference URL below was fetched before being cited.
  * `eraRange` spans AID (Morgan & Sonquist 1963, the first regression tree algorithm, per Loh
  * 2011) to Cohen's RIPPER (1995).
+ *
+ * Phase 3 wrap-up: PLAN.md's facets convention question is resolved as (a) — `handlesMissing`/
+ * `handlesCategorical` describe the common library implementation the entry's own code sample
+ * demonstrates, not the abstract method, with method-level capability left to prose. That retrofit
+ * changed `handlesCategorical` from true to false on `decision-trees`, `regression-trees` and
+ * `tree-pruning` — all three demonstrate scikit-learn's `DecisionTreeClassifier`/`Regressor`, whose
+ * docs (checked directly, scikit-learn.org/stable/modules/tree.html) still say "categorical
+ * variables for now" is unsupported, even though `decision-trees`' own `whenNotToUse` already said
+ * so in prose. `handlesMissing` stayed true on all three: scikit-learn's tree docs now document
+ * routing NaNs to whichever child minimises impurity, a real (if recent) capability of the same
+ * implementation. `id3-c45` and `rule-induction` were left at true/true — their referenced common
+ * implementation is Weka (J48 / JRip), not scikit-learn (both entries already say so explicitly),
+ * and J48's native multiway categorical splits and probabilistic missing-value handling are
+ * genuine, already documented in `id3-c45`'s own sourced prose. `mars.ts`'s `gradient-boosting`
+ * needed no change — it was already false/false, correctly describing plain
+ * `GradientBoostingClassifier` rather than `HistGradientBoosting*`, per PLAN.md's own diagnosis.
  */
 
 import type { Body } from '../../types/content.ts';
@@ -121,7 +137,7 @@ export const body = {
         trainingCost: 'low',
         needsScaling: false,
         handlesMissing: true,
-        handlesCategorical: true,
+        handlesCategorical: false,
         outputType: 'class-label-with-probabilities',
       },
       math: {
@@ -254,7 +270,7 @@ export const body = {
         handlesCategorical: true,
         outputType: 'class-label-or-ruleset',
       },
-      related: ['decision-trees', 'tree-pruning', 'rule-induction'],
+      related: ['decision-trees', 'tree-pruning', 'rule-induction', 'feature-importance'],
       references: {
         free: [
           {
@@ -267,6 +283,11 @@ export const body = {
           },
         ],
         papers: [
+          {
+            title: 'Induction of Decision Trees',
+            url: 'https://doi.org/10.1007/BF00116251',
+            year: 1986,
+          },
           {
             title: 'Top 10 Algorithms in Data Mining — §1 "C4.5 and beyond", written by Quinlan',
             url: 'https://www.cs.umd.edu/~samir/498/10Algorithms-08.pdf',
@@ -365,7 +386,7 @@ export const body = {
         trainingCost: 'low',
         needsScaling: false,
         handlesMissing: true,
-        handlesCategorical: true,
+        handlesCategorical: false,
         outputType: 'continuous-value',
       },
       math: {
@@ -526,7 +547,7 @@ export const body = {
         trainingCost: 'low',
         needsScaling: false,
         handlesMissing: true,
-        handlesCategorical: true,
+        handlesCategorical: false,
         outputType: 'pruned-subtree',
       },
       math: {
@@ -655,7 +676,7 @@ export const body = {
         handlesCategorical: true,
         outputType: 'ordered-rule-list',
       },
-      related: ['decision-trees', 'id3-c45'],
+      related: ['decision-trees', 'id3-c45', 'association-rules'],
       references: {
         free: [
           {

@@ -773,7 +773,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'faithfulness-verdict-on-reasoning-trace',
       },
-      related: ['mechanistic-interpretability', 'llm-as-judge'],
+      related: ['mechanistic-interpretability', 'llm-as-judge', 'react-loops'],
       references: {
         free: [
           {

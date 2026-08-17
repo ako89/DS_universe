@@ -452,43 +452,73 @@ at its §3 tier, with `npm run validate` clean.
 - [x] `belt.ts` · [x] `pallas.ts` · [x] `jupiter.ts` · [x] `saturn.ts` — batch 2
 - [x] `uranus.ts` · [x] `neptune.ts` · [x] `chronos.ts` — batch 3
 - [x] `prometheus.ts` · [x] `vulcan.ts` · [x] `echo.ts` · [x] `chimera.ts` — batch 4
-- [ ] `arachne.ts` · [ ] `odyssey.ts` — batch 5 (planned)
-- [ ] `nova.ts` **(exists but incomplete — only `self-attention`, the Phase 2 pressure-test
-      entry; batch 5 extends it with the other 5 moons, same pattern mercury/jupiter used in
-      batches 1–2)** · [ ] `babel.ts` — batch 5 (planned)
-- [ ] `genesis.ts` · [ ] `forge.ts` · [ ] `velocity.ts` · [ ] `athenaeum.ts` — batch 6 (planned)
-- [ ] `daedalus.ts` · [ ] `iris.ts` · [ ] `aegis.ts` — batch 7 (planned)
-- [ ] **Add the verified Quinlan 1986 reference to `terra.ts`'s `id3-c45` entry.** The batch-1
-      agent correctly declined to cite it — Springer/ACM/IEEE all blocked the fetch — but
-      independent verification during batch-1 review confirmed DOI `10.1007/BF00116251` resolves
-      via Crossref to "Induction of decision trees", Quinlan, 1986. Safe to add:
-      `{ title: 'Induction of Decision Trees', url: 'https://doi.org/10.1007/BF00116251', year: 1986 }`
-      in `references.papers`. Small, standalone, not tied to any batch.
-- [ ] **Decide the facets convention** for `handlesMissing`/`handlesCategorical` (does a facet
-      describe the algorithm or the common library implementation?) and for `Facets.task` values
-      the frozen union has no slot for (found via `association-rules` in `jupiter.ts`, which had
-      to use `task: ['clustering']` as the nearest available fit — genuinely wrong, not just
-      imprecise). Concrete conflict: `terra.ts` sets `handlesMissing`/`handlesCategorical` true/true
-      on the tree entries (true of CART the method, false of `DecisionTreeClassifier`); `mars.ts`
-      sets `gradient-boosting` false/false (true of `HistGradientBoosting*`). Both agents flagged
-      this independently. Since `ENGINE_SPEC.md §5` has the Phase 4 advisor rank on facets
-      directly, an inconsistent convention degrades advisor output invisibly. Resolve before too
-      many more bodies encode the inconsistency; retrofit `terra.ts`/`mars.ts`/`jupiter.ts` once
-      decided. Options: (a) facets always describe the common implementation, method-level
-      capability noted in prose; (b) facets always describe the method, library gaps noted in
-      `whenNotToUse`; (c) extend the schema — needs the user's sign-off, `types/content.ts` is
-      frozen.
-- [ ] **Re-verify the 3 Phase 2 entries** — `linear-regression`, `dbscan` and `self-attention`
-      were written in a session whose `WebFetch` returned `EGRESS_BLOCKED` for every external host
-      (see the Phase 2 note above), so they were sourced from search-result excerpts rather than
-      opened pages and never got CONTENT_GUIDE §3's "open every URL" step. **WebFetch works in
-      this environment** — verified against scikit-learn.org, 2026-08-16. Open every cited URL and
-      re-check years, authors, complexity bounds and hyperparameter defaults against real sources.
-      Highest risk: `linear-regression`'s 1805 Legendre attribution and `O(n·p²)` SVD bound;
-      `dbscan`'s `O(n log n)` / `O(n²)` bounds and its two cited papers; `self-attention`'s
-      citations and any lineage claim.
-- [ ] Cross-link pass — every entry has ≥2 resolving `related`, ≥1 crossing bodies where sensible
-- [ ] `npm run check-links` — fix or drop every dead URL
+- [x] `arachne.ts` · [x] `odyssey.ts` — batch 5
+- [x] `nova.ts` extended to all 6 moons (`self-attention` was the Phase 2 pressure-test entry;
+      batch 5 added `multi-head-attention`, `transformer-block`, `positional-encoding`,
+      `scaling-laws`, `encoder-decoder-architectures`, and independently re-verified
+      `self-attention`'s own citations in the same pass — see the "Re-verify" item below, now
+      folded into this one since it happened together) · [x] `babel.ts` — batch 5
+- [x] `genesis.ts` · [x] `forge.ts` · [x] `velocity.ts` · [x] `athenaeum.ts` — batch 6
+- [x] `daedalus.ts` · [x] `iris.ts` · [x] `aegis.ts` — batch 7
+
+**All 27 star/body placements now have content — 195 entries total.** Verified via
+`npm run validate` (`Discovered 27 content module(s), 195 entr(y/ies)`), `npm run build` and
+`npm test`, all clean, after every batch and again after the wrap-up items below.
+
+- [x] **Add the verified Quinlan 1986 reference to `terra.ts`'s `id3-c45` entry.** Independently
+      re-verified via Crossref during the Phase 3 wrap-up (title/authors/year match exactly) before
+      adding — see `terra.ts`'s `id3-c45.references.papers`.
+- [x] **Decide the facets convention** for `handlesMissing`/`handlesCategorical`. **Resolved as
+      option (a): facets describe the common library implementation the entry's own code sample
+      demonstrates, method-level capability noted in prose when it differs.** Documented in
+      [CONTENT_GUIDE §4.5](docs/CONTENT_GUIDE.md#45-facets-handlesmissing--handlescategorical-convention).
+      Retrofitted `terra.ts`'s `decision-trees`, `regression-trees` and `tree-pruning`
+      (`handlesCategorical` true→false, matching scikit-learn's `DecisionTreeClassifier`/`Regressor`
+      docs, checked directly — `handlesMissing` stayed true, since current scikit-learn does route
+      NaNs). `id3-c45`, `rule-induction` (Weka J48/JRip is their actual common implementation, which
+      genuinely supports both) and `mars.ts`'s `gradient-boosting` (already false/false, correctly
+      describing plain `GradientBoostingClassifier` rather than `HistGradientBoosting*`) needed no
+      change. **Not re-audited across all 195 entries** — apply the convention going forward.
+      **Still open, and NOT resolved by this decision:** the separate `Facets.task` schema gap
+      (`association-rules` in `jupiter.ts` has no accurate union value, several `aegis.ts` entries
+      hit the same wall) needs `types/content.ts` reopened, which needs the user's sign-off — not
+      authorized as part of this decision, see CONTENT_GUIDE §4.5 for the detail.
+- [x] **Re-verify the 3 Phase 2 entries** — `self-attention` was re-verified during batch 5 (see
+      `nova.ts`'s file header); `linear-regression` and `dbscan` were re-verified during the Phase 3
+      wrap-up. All citations and specific numbers were opened/self-extracted and checked; nothing
+      needed correcting in any of the three. Detail worth keeping: `linear-regression`'s cited Gauss
+      priority-dispute paper (Stigler 1981) actually leans toward *Gauss* having priority of
+      discovery, not Legendre — but the entry's own prose never overclaims Legendre's sole priority
+      (it only dates the 1805 publication and cites the dispute as context), so no change was
+      needed. `dbscan`'s `O(n log n)` bound is stated verbatim in the self-extracted 1996 paper; the
+      `O(n^2)`-without-index half and the `minPts = 2 × dim` heuristic both trace to the entry's
+      second citation (Schubert et al. 2017), self-extracted and confirmed, not the 1996 paper — the
+      claim is genuinely sourced, just split across the entry's two references.
+- [x] Cross-link pass — every entry already has ≥2 resolving `related` for Tier 1 / ≥1 for Tier 2
+      (mechanically enforced by `npm run validate`, which has passed after every batch). The
+      qualitative half — "≥1 crossing bodies where sensible" — was audited as one dedicated pass
+      across all 195 entries via a small throwaway script (dynamically import every body module,
+      build an `entryId → bodyId` map, flag any entry whose `related` ids all resolve to its own
+      body). 50 of 195 entries had only same-body links; each was given one genuine, individually
+      reasoned cross-body connection (e.g. `terra::id3-c45` → `feature-importance`,
+      `jupiter::gaussian-mixture-models` → `maximum-likelihood-and-map`,
+      `vulcan::object-detection` → `vision-language-models`). Re-running the audit afterward
+      confirmed 0 entries without a cross-body link and 0 unresolved `related` ids. The change is
+      surgical — 19 files, 50 `related`-array insertions, nothing else touched — and
+      `validate`/`build`/`test` all pass clean.
+- [x] `npm run check-links` — **tool built** (`tools/check-links.ts`; the `check-links` npm script
+      already existed as a placeholder since Phase 0). Fetches every citation URL across all content
+      modules with a real browser User-Agent, bounded concurrency and a 25s timeout; treats HTTP 403
+      and 429 as non-fatal WARNINGs (CONTENT_GUIDE §3's documented publisher/bot-detection pattern —
+      confirmed empirically while building this tool, when a SourceForge doc page and several DOIs
+      that had returned 200 to a manual check minutes earlier came back 403/429 purely from this
+      tool's own request volume) and everything else non-2xx as a hard FAILURE. First real run found
+      **one genuine dead link**: `mercury.ts`'s `generalized-linear-models` cited
+      `https://doi.org/10.1007/978-1-4899-3242-6` (McCullagh & Nelder, *Generalized Linear Models*)
+      — the DOI is registered correctly (confirmed via Crossref: title/authors match), but resolves
+      to a dead Springer page (404). Fixed by dropping the broken `url` and keeping the citation
+      (`BookRef.url` is optional). Clean run after the fix: 0 failures, 55 warnings (all 403/429,
+      manually spot-checked as bot-detection, not dead links).
 
 ### Phase 4 — Search & advisor (lexical)
 

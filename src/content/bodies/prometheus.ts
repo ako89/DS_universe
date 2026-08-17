@@ -400,7 +400,7 @@ export const body = {
       // convolution-and-pooling (Vulcan) and vanilla-rnn-and-bptt (Echo) are the genuine forward
       // links -- both are this exact linear-then-nonlinearity recipe plus a structural weight-
       // sharing constraint (across space, or across time) that a plain MLP does not have.
-      related: ['perceptron', 'backpropagation-and-autodiff', 'activation-functions', 'vanishing-gradients-and-universal-approximation'],
+      related: ['perceptron', 'backpropagation-and-autodiff', 'activation-functions', 'vanishing-gradients-and-universal-approximation', 'logistic-regression'],
       references: {
         free: [{ title: 'Dive into Deep Learning — 5.1. Multilayer Perceptrons', url: 'https://d2l.ai/chapter_multilayer-perceptrons/mlp.html' }],
         papers: [
@@ -617,7 +617,7 @@ export const body = {
         '',
         'block = nn.Sequential(nn.Linear(16, 32), nn.GELU(), nn.Linear(32, 8))',
       ].join('\n'),
-      related: ['multilayer-perceptron', 'weight-initialization', 'vanishing-gradients-and-universal-approximation'],
+      related: ['multilayer-perceptron', 'weight-initialization', 'vanishing-gradients-and-universal-approximation', 'lenet-to-alexnet-to-vgg'],
       references: {
         free: [{ title: 'Dive into Deep Learning — 5.1. Multilayer Perceptrons (activation functions)', url: 'https://d2l.ai/chapter_multilayer-perceptrons/mlp.html' }],
         papers: [
@@ -719,7 +719,7 @@ export const body = {
         'tanh_layer = nn.Linear(256, 256)',
         'nn.init.xavier_normal_(tanh_layer.weight)                        # Xavier/Glorot: pairs with tanh/sigmoid',
       ].join('\n'),
-      related: ['activation-functions', 'batch-and-layer-normalization', 'vanishing-gradients-and-universal-approximation'],
+      related: ['activation-functions', 'batch-and-layer-normalization', 'vanishing-gradients-and-universal-approximation', 'transformer-block'],
       references: {
         free: [{ title: 'Dive into Deep Learning — 5.4. Numerical Stability and Initialization', url: 'https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html' }],
         papers: [
@@ -842,7 +842,7 @@ export const body = {
         '    nn.GELU(),',
         ')',
       ].join('\n'),
-      related: ['weight-initialization', 'dropout-and-weight-decay', 'optimizers'],
+      related: ['weight-initialization', 'dropout-and-weight-decay', 'optimizers', 'transformer-block'],
       references: {
         free: [{ title: 'Dive into Deep Learning — 8.5. Batch Normalization', url: 'https://d2l.ai/chapter_convolutional-modern/batch-norm.html' }],
         papers: [
@@ -1190,7 +1190,7 @@ export const body = {
         handlesCategorical: false,
         outputType: 'theoretical-property-of-network-capacity-and-trainability',
       },
-      related: ['multilayer-perceptron', 'activation-functions', 'weight-initialization', 'batch-and-layer-normalization'],
+      related: ['multilayer-perceptron', 'activation-functions', 'weight-initialization', 'batch-and-layer-normalization', 'lstm'],
       references: {
         free: [{ title: 'Wikipedia — Vanishing gradient problem', url: 'https://en.wikipedia.org/wiki/Vanishing_gradient_problem' }],
         papers: [

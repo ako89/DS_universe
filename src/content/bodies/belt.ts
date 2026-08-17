@@ -160,7 +160,7 @@ export const body = {
       ].join('\n'),
       // Cross-body: leakage through preprocessing applies to every estimator in the system; called
       // out generically here rather than per-algorithm.
-      related: ['cross-validation', 'hyperparameter-search', 'overfitting-and-regularization'],
+      related: ['cross-validation', 'hyperparameter-search', 'overfitting-and-regularization', 'empirical-risk-minimization'],
       references: {
         free: [
           {
