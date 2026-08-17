@@ -22,6 +22,7 @@ import { createCard } from './ui/card.ts';
 import { createBreadcrumb } from './ui/breadcrumb.ts';
 import { createHelp } from './ui/help.ts';
 import { createSearch } from './ui/search.ts';
+import { createAdvisor } from './ui/advisor.ts';
 import { buildIndex } from './data/search-index.ts';
 import { entries } from './data/registry.ts';
 
@@ -60,6 +61,16 @@ const card = createCard(mustFind('#card'), {
 // one is ever open by closing the other first.
 const searchIndex = buildIndex(entries.values());
 const search = createSearch(mustFind('#modal'), searchIndex, { onSelect: focusEntry });
+const advisor = createAdvisor(mustFind('#modal'), searchIndex, { onSelect: focusEntry });
+
+function toggleSearch(): void {
+  advisor.close();
+  search.toggle();
+}
+function toggleAdvisor(): void {
+  search.close();
+  advisor.toggle();
+}
 
 // Orbital motion, twinkle/pulse and camera flights all freeze under prefers-reduced-motion
 // (ENGINE_SPEC §2) and, additionally, whenever the card is open (ENGINE_SPEC §4).
@@ -141,7 +152,8 @@ attachInput(canvas, camera, bodies, {
   onSelectEntry: (_bodyId, entryId) => focusEntry(entryId),
   onBack: goBack,
   onReset: goHome,
-  onToggleSearch: () => search.toggle(),
+  onToggleSearch: toggleSearch,
+  onToggleAdvisor: toggleAdvisor,
   onToggleHelp: () => help.toggle(),
   onHover(bodyId, entryId, clientX, clientY) {
     if (bodyId) {

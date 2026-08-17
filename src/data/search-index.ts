@@ -33,14 +33,26 @@ export interface SearchIndex {
 // BM25's standard constants: k1 controls term-frequency saturation, b controls how much a long
 // document is penalized relative to the average.
 const K1 = 1.5;
-const B = 0.75;
+// Standard web-search BM25 tunings assume documents whose length mostly reflects how much filler
+// surrounds the same amount of signal. Here every entry is deliberately well-written prose of
+// genuinely different lengths (a two-sentence Tier 2 stub vs. a full Tier 1 intuition paragraph
+// plus 4-5 whenToUse items) — the standard b=0.75 length penalty was found, empirically, to
+// bury longer Tier 1 entries under much shorter ones that happened to repeat the query's terms
+// in a smaller space. A low b keeps some length normalization without that effect dominating.
+const B = 0.15;
 
-const NAME_MATCH_WEIGHT = 6;
-
+// The advisor feeds this the same tokenizer with full free-text problem statements ("I have 50k
+// rows and need to predict X..."), so alongside plain grammatical stopwords this also drops the
+// generic verbs/fillers a problem description is full of but that carry no topical signal
+// ("need", "want", "get", "know") — left in, they nudge every entry's BM25 score up by roughly
+// the same tiny amount and mostly just add noise to which entries separate from the pack.
 const STOPWORDS = new Set([
   'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'have', 'in', 'into',
-  'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'their', 'this', 'to', 'was', 'were',
+  'is', 'it', 'its', 'my', 'of', 'on', 'or', 'that', 'the', 'their', 'this', 'to', 'was', 'were',
   'which', 'with', 'you', 'your',
+  'am', 'can', 'could', 'do', 'does', 'get', 'got', 'had', 'here', 'how', 'i', 'just', 'know',
+  'like', 'need', 'now', 'really', 'should', 'so', 'some', 'there', 'want', 'wants', 'what',
+  'when', 'where', 'will', 'would',
 ]);
 
 export function tokenize(text: string): string[] {
@@ -114,10 +126,42 @@ function similarity(a: string, b: string): number {
   return maxLen === 0 ? 1 : 1 - levenshtein(a, b) / maxLen;
 }
 
-/** Rewards a query that is close to an entry's actual name or alias, at the whole-string level
- *  (typo tolerance for the search palette) and the per-token level (partial credit for a
- *  multi-word query that only shares some words, e.g. "gradient boost" against "XGBoost"'s alias
- *  "extreme gradient boosting"). */
+const WHOLE_NAME_WEIGHT = 10;
+const TOKEN_COVERAGE_WEIGHT = 40;
+
+/** True for an exact word, and for the light stemming variants a name/alias and a query commonly
+ *  differ by ("boost" vs "boosting", "cluster" vs "clustering") — a prefix relationship or a
+ *  1-edit typo, gated to words long enough that either check stays meaningful. */
+function tokensRoughlyMatch(a: string, b: string): boolean {
+  if (a === b) return true;
+  const shorter = Math.min(a.length, b.length);
+  const longer = Math.max(a.length, b.length);
+  if (shorter < 4) return false;
+  // A prefix relationship is a real stemming signal ("boost" -> "boosting", ratio 0.63) but not
+  // when the shorter word is only a small fraction of the longer one ("gene" -> "generation",
+  // ratio 0.4, found empirically as a false match for a query about gene expression data hitting
+  // "Retrieval-Augmented Generation") — those are two unrelated words that happen to share a
+  // prefix, not one word stemmed from the other.
+  if ((a.startsWith(b) || b.startsWith(a)) && shorter / longer >= 0.55) return true;
+  // A single substitution/insertion/deletion is a meaningful typo signal on a longer word, but on
+  // a short one it is a large fraction of the word — found empirically as a false match between
+  // "boss" and the unrelated acronym "GOSS" (LightGBM's alias), both 4 letters, 1 edit apart.
+  return shorter >= 6 && levenshtein(a, b) <= 1;
+}
+
+/** Rewards a query that is close to an entry's actual name or alias: at the whole-string level
+ *  (typo tolerance for the search palette, e.g. "DBSCN" -> DBSCAN) and at the token level (a
+ *  multi-word query that only shares some words with a name, e.g. "gradient boost" against
+ *  XGBoost's alias "extreme gradient boosting").
+ *
+ *  The token bonus is a *coverage product* — (matched query tokens / query tokens) times
+ *  (matched name tokens / name tokens) — rather than a flat per-match bonus. A flat bonus made a
+ *  long free-text advisor query (dozens of tokens) score as high as a real name lookup the moment
+ *  any single word coincided with an unrelated entry's alias (e.g. "classification" inside
+ *  k-Nearest Neighbors' alias "nearest neighbour classification"). The product only gets large
+ *  when the match covers a meaningful fraction of *both* sides, which a short palette query
+ *  against a short name naturally does and a long problem description brushing one alias word
+ *  naturally doesn't. */
 function nameMatchScore(query: string, queryTerms: string[], doc: IndexedDoc): { score: number; matched: string[] } {
   const q = query.trim().toLowerCase();
   const names = [doc.entry.name, ...(doc.entry.aliases ?? [])];
@@ -127,32 +171,42 @@ function nameMatchScore(query: string, queryTerms: string[], doc: IndexedDoc): {
   for (const name of names) {
     const n = name.toLowerCase();
     if (q.length >= 2 && (n === q || n.startsWith(q))) {
-      whole = Math.max(whole, 12);
+      whole = Math.max(whole, 1.2);
       matched.push(name);
       continue;
     }
     const sim = similarity(q, n);
     if (sim > 0.6) {
-      whole = Math.max(whole, sim * 8);
+      whole = Math.max(whole, sim);
       matched.push(name);
     }
   }
 
-  let tokenBonus = 0;
-  for (const qt of queryTerms) {
+  const uniqueQueryTerms = [...new Set(queryTerms)];
+  const matchedNameTerms = new Set<string>();
+  let matchedQueryCount = 0;
+
+  for (const qt of uniqueQueryTerms) {
     if (doc.nameTerms.has(qt)) {
-      tokenBonus += 2;
+      matchedQueryCount += 1;
+      matchedNameTerms.add(qt);
+      matched.push(qt);
       continue;
     }
     for (const nt of doc.nameTerms) {
-      if (Math.min(qt.length, nt.length) >= 4 && levenshtein(qt, nt) <= 1) {
-        tokenBonus += 1.2;
+      if (tokensRoughlyMatch(qt, nt)) {
+        matchedQueryCount += 1;
+        matchedNameTerms.add(nt);
+        matched.push(qt);
         break;
       }
     }
   }
 
-  return { score: (whole + tokenBonus) * NAME_MATCH_WEIGHT, matched };
+  const queryCoverage = uniqueQueryTerms.length > 0 ? matchedQueryCount / uniqueQueryTerms.length : 0;
+  const nameCoverage = doc.nameTerms.size > 0 ? matchedNameTerms.size / doc.nameTerms.size : 0;
+
+  return { score: whole * WHOLE_NAME_WEIGHT + queryCoverage * nameCoverage * TOKEN_COVERAGE_WEIGHT, matched };
 }
 
 export function search(idx: SearchIndex, query: string, limit = 8): SearchHit[] {

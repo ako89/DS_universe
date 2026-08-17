@@ -203,6 +203,11 @@ export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: S
         break;
       case 'a':
       case 'A':
+        // Prevent default: the advisor opens and focuses a <textarea> synchronously below, and
+        // without this the same keypress's default text-insertion action fires after that focus
+        // move and types a stray "a" into it (search's '/' has the same hazard; that case already
+        // guards it).
+        e.preventDefault();
         handlers.onToggleAdvisor?.();
         break;
       case '?':

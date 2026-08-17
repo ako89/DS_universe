@@ -61,6 +61,7 @@ export const LEXICON: Readonly<Record<string, readonly string[]>> = {
 
   // ---- Task intent: anomaly / outlier detection ----
   anomaly: ['anomaly-detection'],
+  anomalies: ['anomaly-detection'],
   'anomaly detection': ['anomaly-detection'],
   outlier: ['anomaly-detection'],
   outliers: ['anomaly-detection'],
@@ -80,8 +81,12 @@ export const LEXICON: Readonly<Record<string, readonly string[]>> = {
   'sales forecast': ['forecasting', 'timeseries', 'tabular'],
   'stock price': ['forecasting', 'timeseries'],
   'sensor data': ['timeseries'],
-  streaming: ['timeseries', 'streaming'],
-  'real-time data': ['timeseries', 'streaming'],
+  // "streaming" alone is not a key: it collides with the LLM sense (streaming a model's output
+  // token by token), which flooded a "streaming sensor data" query with unrelated agent/tooling
+  // entries whose own prose talks about streaming responses. "streaming data"/"real-time data"
+  // are unambiguous phrases instead.
+  'streaming data': ['timeseries'],
+  'real-time data': ['timeseries'],
   'sequential data': ['timeseries'],
 
   // ---- Task intent: dimensionality reduction / representation ----
@@ -211,15 +216,18 @@ export const LEXICON: Readonly<Record<string, readonly string[]>> = {
   interpretable: ['interpretable'],
   interpretability: ['interpretable'],
   explainable: ['interpretable'],
-  'explain to my boss': ['interpretable'],
-  'explain to a regulator': ['interpretable'],
-  'explain to a non-technical stakeholder': ['interpretable'],
+  'explain to my boss': ['interpretable', 'stakeholder'],
+  'explain to a regulator': ['interpretable', 'stakeholder', 'auditor', 'regulator'],
+  'explain to a non-technical stakeholder': ['interpretable', 'stakeholder'],
   'explain the model': ['interpretable'],
   'why did it predict that': ['interpretable'],
+  'my boss': ['interpretable', 'stakeholder'],
+  'know why': ['interpretable'],
   'black box': ['interpretability'],
-  regulator: ['interpretable'],
-  regulated: ['interpretable'],
-  auditable: ['interpretable'],
+  regulator: ['interpretable', 'regulator'],
+  regulated: ['interpretable', 'regulator'],
+  auditor: ['interpretable', 'auditor'],
+  auditable: ['interpretable', 'auditor'],
   transparent: ['interpretable'],
   trustworthy: ['interpretable'],
   fairness: ['interpretable'],
@@ -251,6 +259,11 @@ export const LEXICON: Readonly<Record<string, readonly string[]>> = {
   'on device': ['cheap', 'fast'],
   gpu: ['deep-learning'],
   'no gpu': ['cheap', 'fast'],
+  'compress a neural network': ['quantization', 'distillation'],
+  'compress the model': ['quantization', 'distillation'],
+  'shrink the model': ['quantization', 'distillation'],
+  'smaller model': ['quantization', 'distillation'],
+  'model size': ['quantization', 'distillation'],
 
   // ---- Modern / LLM stack ----
   llm: ['language-model', 'generation', 'text'],
@@ -270,9 +283,11 @@ export const LEXICON: Readonly<Record<string, readonly string[]>> = {
   hallucination: ['language-model', 'grounding'],
   hallucinating: ['language-model', 'grounding'],
   jailbreak: ['language-model', 'safety'],
-  agent: ['agent', 'tool-use'],
-  agents: ['agent', 'tool-use'],
+  // Bare "agent"/"agents" is deliberately not a key here — it is ambiguous with a reinforcement
+  // learning agent ("an RL agent to play a game"), and unlike the phrases below there is no
+  // wording left over once the ambiguous sense is removed to tell the two apart.
   'ai agent': ['agent', 'tool-use'],
+  'llm agent': ['agent', 'tool-use'],
   'tool use': ['agent', 'tool-use'],
   'function calling': ['agent', 'tool-use'],
   chatbots: ['generation', 'text', 'language-model'],

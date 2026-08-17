@@ -196,6 +196,8 @@
 }
 
 .search-results {
+  flex: 1;
+  min-height: 0;
   margin-top: var(--s-4);
   overflow-y: auto;
 }
@@ -248,4 +250,126 @@
 .search-result-hook {
   font-size: var(--fs-xs);
   color: var(--text-dim);
+}
+
+/* Advisor ("A"). Shares .modal-panel with the search palette above; advisor-panel only adjusts
+   what needs to differ (wider, internal scroll on the results list instead of the whole panel). */
+.advisor-panel {
+  width: min(640px, 92vw);
+}
+
+.advisor-title {
+  margin: 0;
+  font-size: var(--fs-xl);
+  color: var(--text);
+}
+
+.advisor-disclaimer {
+  margin: var(--s-1) 0 0;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.advisor-input {
+  width: 100%;
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  resize: none;
+}
+
+.advisor-input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.advisor-results {
+  flex: 1;
+  min-height: 0;
+  margin-top: var(--s-4);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.advisor-result {
+  padding: var(--s-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.advisor-result-eyebrow {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.advisor-result-name {
+  display: block;
+  margin-top: var(--s-1);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.advisor-result-name:hover,
+.advisor-result-name:focus-visible {
+  color: var(--focus);
+}
+
+.advisor-result-hook {
+  margin: var(--s-1) 0 0;
+  color: var(--text-dim);
+}
+
+.advisor-result-why {
+  margin: var(--s-2) 0 0;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.advisor-result-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+  margin-top: var(--s-3);
+}
+
+.advisor-result-cols h4 {
+  margin: 0 0 var(--s-1);
+  font-size: var(--fs-sm);
+}
+
+.advisor-result-cols ul {
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.advisor-result-cols li + li {
+  margin-top: var(--s-1);
+}
+
+@media (max-width: 859px) {
+  .advisor-result-cols {
+    grid-template-columns: 1fr;
+    gap: var(--s-2);
+  }
 }
