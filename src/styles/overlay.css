@@ -154,3 +154,222 @@
   color: var(--text);
   background: var(--hairline);
 }
+
+/* Search palette ("/") and advisor ("A"). Both render into the shared `#modal` element (see
+   ui/search.ts and ui/advisor.ts) — #modal itself supplies the scrim, matching .help-scrim
+   above; `position: fixed; inset: 0` and z-index already come from main.css. */
+#modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 4, 10, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 92vw);
+  max-height: 76vh;
+  padding: var(--s-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-raised);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-lg);
+}
+
+.search-input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.search-results {
+  flex: 1;
+  min-height: 0;
+  margin-top: var(--s-4);
+  overflow-y: auto;
+}
+
+.search-hint {
+  margin: var(--s-4) var(--s-2);
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+.search-group-label {
+  margin: var(--s-4) 0 var(--s-1);
+  padding: 0 var(--s-2);
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.search-group-label:first-child {
+  margin-top: 0;
+}
+
+.search-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.search-result:hover,
+.search-result.is-selected {
+  background: var(--hairline);
+}
+
+.search-result-name {
+  font-size: var(--fs-base);
+  color: var(--text);
+}
+
+.search-result-hook {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+/* Advisor ("A"). Shares .modal-panel with the search palette above; advisor-panel only adjusts
+   what needs to differ (wider, internal scroll on the results list instead of the whole panel). */
+.advisor-panel {
+  width: min(640px, 92vw);
+}
+
+.advisor-title {
+  margin: 0;
+  font-size: var(--fs-xl);
+  color: var(--text);
+}
+
+.advisor-disclaimer {
+  margin: var(--s-1) 0 0;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.advisor-input {
+  width: 100%;
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  resize: none;
+}
+
+.advisor-input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.advisor-results {
+  flex: 1;
+  min-height: 0;
+  margin-top: var(--s-4);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.advisor-result {
+  padding: var(--s-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.advisor-result-eyebrow {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.advisor-result-name {
+  display: block;
+  margin-top: var(--s-1);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.advisor-result-name:hover,
+.advisor-result-name:focus-visible {
+  color: var(--focus);
+}
+
+.advisor-result-hook {
+  margin: var(--s-1) 0 0;
+  color: var(--text-dim);
+}
+
+.advisor-result-why {
+  margin: var(--s-2) 0 0;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.advisor-result-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+  margin-top: var(--s-3);
+}
+
+.advisor-result-cols h4 {
+  margin: 0 0 var(--s-1);
+  font-size: var(--fs-sm);
+}
+
+.advisor-result-cols ul {
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.advisor-result-cols li + li {
+  margin-top: var(--s-1);
+}
+
+@media (max-width: 859px) {
+  .advisor-result-cols {
+    grid-template-columns: 1fr;
+    gap: var(--s-2);
+  }
+}
