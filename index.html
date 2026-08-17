@@ -21,8 +21,12 @@
     -->
     <canvas id="scene" aria-hidden="true"></canvas>
 
-    <!-- Text alternative to the canvas for screen readers. Populated in Phase 5. -->
+    <!-- Text alternative to the canvas for screen readers: a one-time overview of the map. -->
     <div id="a11y-summary" class="visually-hidden" role="region" aria-label="Map contents"></div>
+
+    <!-- Announces whatever's currently hovered/keyboard-focused — the canvas has no DOM presence
+         of its own for a screen reader to read, see ui/a11y-status.ts. -->
+    <div id="a11y-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
 
     <div id="overlay"></div>
     <div id="card" role="complementary" aria-label="Algorithm detail"></div>

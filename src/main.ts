@@ -11,10 +11,11 @@
 import { BG, ZOOM_MAX, ZOOM_MIN } from './engine/constants.ts';
 import { createCanvas, startLoop } from './engine/canvas.ts';
 import { Camera } from './engine/camera.ts';
-import { buildScene, motionTimeScale, updateScene } from './engine/scene.ts';
+import { bodyTabOrder, buildScene, motionTimeScale, updateScene } from './engine/scene.ts';
 import { Picking } from './engine/picking.ts';
 import { attachInput } from './engine/input.ts';
 import { createStarfield } from './render/starfield.ts';
+import type { Highlight } from './render/draw.ts';
 import { drawScene } from './render/draw.ts';
 import { createLabelLayer } from './render/labels.ts';
 import { createTooltip } from './ui/tooltip.ts';
@@ -23,6 +24,7 @@ import { createBreadcrumb } from './ui/breadcrumb.ts';
 import { createHelp } from './ui/help.ts';
 import { createSearch } from './ui/search.ts';
 import { createAdvisor } from './ui/advisor.ts';
+import { createStatusAnnouncer, populateSummary } from './ui/a11y-status.ts';
 import { buildIndex } from './data/search-index.ts';
 import { entries } from './data/registry.ts';
 
@@ -43,12 +45,42 @@ onResize((newVw, newVh) => {
 });
 
 const starfield = createStarfield();
-const labels = createLabelLayer(overlay, (id) => goToBody(id));
 const bodies = buildScene();
 const bodyById = new Map(bodies.map((b) => [b.id, b]));
+const tabOrder = bodyTabOrder(bodies);
 const picking = new Picking();
 
 const tooltip = createTooltip();
+const statusAnnouncer = createStatusAnnouncer(mustFind('#a11y-status'));
+populateSummary(mustFind('#a11y-summary'), bodies);
+
+// Single source of truth for "what's currently pointed at", whether by a real mouse hover or a
+// keyboard focus/cursor move (render/labels.ts's focus/blur, or engine/input.ts's Left/Right moon
+// cursor) — feeds the tooltip, the on-canvas glow (render/draw.ts's Highlight) and the screen
+// reader live region together, so all three always agree.
+let highlight: Highlight = {};
+
+function setHighlight(bodyId: string | null, entryId: string | undefined, clientX?: number, clientY?: number): void {
+  highlight = bodyId ? { bodyId, ...(entryId !== undefined ? { entryId } : {}) } : {};
+  if (bodyId && clientX !== undefined && clientY !== undefined) {
+    tooltip.show(bodyId, entryId, clientX, clientY);
+  } else if (!bodyId) {
+    tooltip.hide();
+  }
+  statusAnnouncer.update(bodyId, entryId);
+}
+
+const labels = createLabelLayer(overlay, {
+  onActivate: (id) => goToBody(id),
+  onFocusChange: (id, anchor) => {
+    if (id && anchor) {
+      setHighlight(id, undefined, anchor.left + anchor.width / 2, anchor.bottom);
+    } else {
+      setHighlight(null, undefined);
+    }
+  },
+  isEntered: (id) => picking.view.level !== 'universe' && picking.view.bodyId === id,
+});
 const breadcrumb = createBreadcrumb({ onRoot: goHome, onBody: goToBody });
 const help = createHelp(mustFind('#help'));
 const card = createCard(mustFind('#card'), {
@@ -155,13 +187,7 @@ attachInput(canvas, camera, bodies, {
   onToggleSearch: toggleSearch,
   onToggleAdvisor: toggleAdvisor,
   onToggleHelp: () => help.toggle(),
-  onHover(bodyId, entryId, clientX, clientY) {
-    if (bodyId) {
-      tooltip.show(bodyId, entryId, clientX, clientY);
-    } else {
-      tooltip.hide();
-    }
-  },
+  onHover: setHighlight,
   getFocusBodyId: () => (picking.view.level === 'universe' ? undefined : picking.view.bodyId),
   getFocusEntryId: () => (picking.view.level === 'detail' ? picking.view.entryId : undefined),
 });
@@ -181,7 +207,7 @@ startLoop((dt, t) => {
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, camera.vw, camera.vh);
   starfield.draw(ctx, camera, clock);
-  drawScene(ctx, camera, bodies, clock);
+  drawScene(ctx, camera, bodies, clock, highlight);
 
   labels.update(
     camera,
@@ -191,6 +217,7 @@ startLoop((dt, t) => {
       wx: body.wx,
       wy: body.wy,
       priority: body.type === 'star' ? 1000 : body.radius,
+      tabIndex: tabOrder.get(body.id) ?? 0,
     })),
   );
 });

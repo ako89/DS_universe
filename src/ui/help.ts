@@ -19,7 +19,7 @@ const SHORTCUTS: [string, string][] = [
   ['Esc', 'Back one level'],
   ['Tab / Shift+Tab', 'Cycle bodies in orbital order'],
   ['↵ Enter', 'Enter the hovered body or moon'],
-  ['← / →', 'Previous / next sibling moon, while a card is open'],
+  ['← / →', 'Previous / next moon, once its body is focused'],
   ['D', 'Toggle the dev FPS overlay'],
   ['Drag', 'Pan'],
   ['Scroll / pinch', 'Zoom, anchored at the cursor'],

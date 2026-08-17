@@ -167,6 +167,27 @@ export function buildScene(): SceneBody[] {
   return scene;
 }
 
+/** Deterministic Tab order for body labels: each star, then its own planets/belt by ascending
+ *  orbitRadius, star-by-star. Explicit rather than relying on natural DOM/creation order, which
+ *  is driven by render/labels.ts's collision-priority sort (visual radius, for thinning
+ *  overlapping labels) — unrelated to, and not a substitute for, "orbital order" as
+ *  docs/ENGINE_SPEC.md §3 specifies it for keyboard traversal. Returns a 1-based ordinal per
+ *  body id (1-based since HTML `tabindex` treats 0 as "natural order", not "first"). */
+export function bodyTabOrder(bodies: SceneBody[]): Map<string, number> {
+  const stars = bodies.filter((b) => b.type === 'star');
+  const order: string[] = [];
+
+  for (const star of stars) {
+    order.push(star.id);
+    const orbiting = bodies
+      .filter((b) => b.type !== 'star' && b.litBy === star.id)
+      .sort((a, b) => a.orbitRadius - b.orbitRadius);
+    for (const body of orbiting) order.push(body.id);
+  }
+
+  return new Map(order.map((id, i) => [id, i + 1]));
+}
+
 /** Orbital speed multiplier for the current camera zoom: 1 (full speed) at or below
  *  MOTION_SLOWDOWN_ZOOM_START, easing down to MOTION_MIN_SCALE at ZOOM_MAX via a smoothstep so
  *  the transition has no visible snap. Callers scale `dt` by this before passing it to

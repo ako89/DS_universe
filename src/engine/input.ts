@@ -2,8 +2,15 @@
  * User input: drag-pan, cursor-anchored wheel zoom, touch (drag + pinch), and the keyboard map
  * from docs/ENGINE_SPEC.md §3. This module only translates raw events into camera moves and
  * handler calls — it holds no view state of its own; `getFocusBodyId`/`getFocusEntryId` let it
- * query the caller's current ViewState without owning it. `A`/`/` toggle UI that doesn't exist
- * until Phase 4; callers simply don't pass those handlers yet.
+ * query the caller's current ViewState without owning it.
+ *
+ * Phase 5: Tab no longer cycles bodies itself — render/labels.ts makes each body label a real,
+ * focusable `tabindex` element, so native browser Tab order does that job now (correctly, with a
+ * real focus ring and screen-reader support, neither of which a synthetic canvas-hover simulation
+ * could give a keyboard-only user). What's left here is Left/Right, extended to work as soon as a
+ * body is focused rather than only once a card is already open — moons have no DOM element of
+ * their own to carry native focus, so this synthetic "moon cursor" (reusing the same hover state
+ * mouse movement drives) is still how a keyboard user reaches them.
  */
 
 import type { Camera } from './camera.ts';
@@ -37,13 +44,13 @@ function canvasPoint(canvas: HTMLCanvasElement, clientX: number, clientY: number
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-/** Bodies in increasing distance from their host star — a stable, deterministic order for
- *  Tab-cycling regardless of screen position. Stars and the belt aren't Tab targets. */
-function orbitalOrder(bodies: SceneBody[]): SceneBody[] {
-  return bodies
-    .filter((b) => b.type === 'planet')
-    .slice()
-    .sort((a, b) => a.orbitRadius - b.orbitRadius);
+/** Inverse of canvasPoint: a world position's *client* coordinates, for positioning a tooltip the
+ *  same way a real cursor position would when the "cursor" is actually the Left/Right moon
+ *  cursor below, not a pointer event. */
+function worldToClient(canvas: HTMLCanvasElement, camera: Camera, wx: number, wy: number): { x: number; y: number } {
+  const rect = canvas.getBoundingClientRect();
+  const { sx, sy } = camera.worldToScreen(wx, wy);
+  return { x: rect.left + sx, y: rect.top + sy };
 }
 
 export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: SceneBody[], handlers: InputHandlers): () => void {
@@ -227,30 +234,40 @@ export function attachInput(canvas: HTMLCanvasElement, camera: Camera, bodies: S
           handlers.onSelectBody?.(hoveredId);
         }
         break;
-      case 'Tab': {
-        const order = orbitalOrder(bodies);
-        if (order.length === 0) break;
-        e.preventDefault();
-        const currentIndex = hoveredId ? order.findIndex((b) => b.id === hoveredId) : -1;
-        const nextIndex = e.shiftKey ? (currentIndex - 1 + order.length) % order.length : (currentIndex + 1) % order.length;
-        const next = order[nextIndex];
-        if (next) setHovered({ bodyId: next.id });
-        break;
-      }
       case 'ArrowLeft':
       case 'ArrowRight': {
+        // Works as soon as a body is focused (moons visible), not only once a card is already
+        // open: with nothing selected yet, this is how a keyboard-only user reaches the *first*
+        // moon at all, since moons (unlike bodies) have no label of their own to natively Tab to.
         const bodyId = handlers.getFocusBodyId?.();
-        const entryId = handlers.getFocusEntryId?.();
-        if (!bodyId || !entryId) break;
+        if (!bodyId) break;
         const body = bodies.find((b) => b.id === bodyId);
         if (!body) break;
         const siblingIds = body.moons.map((m) => m.id).filter((id): id is string => id !== undefined);
-        const currentIndex = siblingIds.indexOf(entryId);
-        if (siblingIds.length === 0 || currentIndex === -1) break;
+        if (siblingIds.length === 0) break;
         e.preventDefault();
+
+        const cardEntryId = handlers.getFocusEntryId?.();
+        const currentEntryId = cardEntryId ?? hoveredEntryId ?? undefined;
+        const currentIndex = currentEntryId ? siblingIds.indexOf(currentEntryId) : -1;
         const delta = e.key === 'ArrowLeft' ? -1 : 1;
-        const nextId = siblingIds[(currentIndex + delta + siblingIds.length) % siblingIds.length];
-        if (nextId && nextId !== entryId) handlers.onSelectEntry?.(bodyId, nextId);
+        // Nothing current yet: land on the first moon regardless of direction, same as Tab
+        // landing on the first item of a list rather than needing a lap around it first.
+        const nextIndex = currentIndex === -1 ? 0 : (currentIndex + delta + siblingIds.length) % siblingIds.length;
+        const nextId = siblingIds[nextIndex];
+        if (!nextId || nextId === currentEntryId) break;
+
+        if (cardEntryId) {
+          // A card is already open: swap directly to the new moon's card (existing behavior).
+          handlers.onSelectEntry?.(bodyId, nextId);
+        } else {
+          // No card open yet: just move the cursor (glow + tooltip), matching how hovering a
+          // moon doesn't open its card either — Enter does that, same as a click would.
+          const moon = body.moons.find((m) => m.id === nextId);
+          if (!moon) break;
+          const client = worldToClient(canvas, camera, moon.wx, moon.wy);
+          setHovered({ bodyId, entryId: nextId }, client.x, client.y);
+        }
         break;
       }
       default:

@@ -9,6 +9,9 @@
  * without content yet still gets a tooltip (name + moon count, or nothing at all for an
  * unwritten moon slot — main.ts never calls show() for those, since picking.ts never reports
  * their id in the first place).
+ *
+ * `describe()` is exported for ui/a11y-status.ts to reuse: the same id -> {title, hook, meta}
+ * resolution, read out to screen reader users via a live region instead of shown near a cursor.
  */
 
 import { HOVER_IN_MS, HOVER_OUT_MS } from '../engine/constants.ts';
@@ -21,7 +24,7 @@ export interface TooltipLayer {
   destroy(): void;
 }
 
-interface TooltipContent {
+export interface TooltipContent {
   title: string;
   hook?: string;
   meta: string;
@@ -32,7 +35,7 @@ const EDGE_MARGIN_PX = 4;
 
 const placements = [...system.stars, ...system.bodies];
 
-function describe(bodyId: string, entryId: string | undefined): TooltipContent | null {
+export function describe(bodyId: string, entryId: string | undefined): TooltipContent | null {
   if (entryId) {
     const entry = contentEntries.get(entryId);
     if (!entry) return null;

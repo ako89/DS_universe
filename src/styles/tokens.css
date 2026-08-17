@@ -29,7 +29,11 @@
 
   /* ---- Region anchor colours ---- */
   --c-inner-near: #f0b429;
-  --c-inner-far: #c1440e;
+  /* Phase 5 contrast audit: the original #c1440e measured 3.8-4.0:1 as the "Cons" column heading
+     text colour (ui/advisor.ts's .card-col-bad), under the 4.5:1 small-text AA minimum. Lightened
+     within the same hue (~18°, rust/dark-orange) to clear it with margin (5.5:1+); only consumer
+     of this token is that heading, so nothing else changes visually. */
+  --c-inner-far: #dd6234;
   --c-craft: #7d8aa3;
   --c-mid-near: #2ec4b6;
   --c-mid-far: #57cc99;
@@ -47,7 +51,13 @@
   /* ---- Text ---- */
   --text: #e6e8f0;
   --text-dim: #a8adc0;
-  --text-faint: #6f7488;
+  /* Phase 5 contrast audit: the original #6f7488 measured 4.2-4.4:1 against the panel fills it's
+     actually used over (card eyebrows/aliases, hyperparameter table headers, tooltip meta,
+     breadcrumb separator, search/advisor hints) — all normal-weight text well under the 18px/14px
+     bold size that would qualify for WCAG's lower "large text" threshold, so it needs the full
+     4.5:1. Lightened to clear that with margin (5.1:1+) while staying visibly more faint than
+     --text-dim's ~9:1. */
+  --text-faint: #7d8296;
   --text-inverse: #05060d;
 
   /* ---- Lines & surfaces ---- */
