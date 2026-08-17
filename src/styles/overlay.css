@@ -154,3 +154,98 @@
   color: var(--text);
   background: var(--hairline);
 }
+
+/* Search palette ("/") and advisor ("A"). Both render into the shared `#modal` element (see
+   ui/search.ts and ui/advisor.ts) — #modal itself supplies the scrim, matching .help-scrim
+   above; `position: fixed; inset: 0` and z-index already come from main.css. */
+#modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 4, 10, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 92vw);
+  max-height: 76vh;
+  padding: var(--s-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-raised);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-lg);
+}
+
+.search-input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.search-results {
+  margin-top: var(--s-4);
+  overflow-y: auto;
+}
+
+.search-hint {
+  margin: var(--s-4) var(--s-2);
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+.search-group-label {
+  margin: var(--s-4) 0 var(--s-1);
+  padding: 0 var(--s-2);
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.search-group-label:first-child {
+  margin-top: 0;
+}
+
+.search-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.search-result:hover,
+.search-result.is-selected {
+  background: var(--hairline);
+}
+
+.search-result-name {
+  font-size: var(--fs-base);
+  color: var(--text);
+}
+
+.search-result-hook {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}

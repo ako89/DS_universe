@@ -21,6 +21,9 @@ import { createTooltip } from './ui/tooltip.ts';
 import { createCard } from './ui/card.ts';
 import { createBreadcrumb } from './ui/breadcrumb.ts';
 import { createHelp } from './ui/help.ts';
+import { createSearch } from './ui/search.ts';
+import { buildIndex } from './data/search-index.ts';
+import { entries } from './data/registry.ts';
 
 function mustFind<T extends Element>(selector: string): T {
   const el = document.querySelector<T>(selector);
@@ -51,6 +54,12 @@ const card = createCard(mustFind('#card'), {
   onRelated: focusEntry,
   onClose: goBack,
 });
+
+// Search and the advisor (Phase 4) take turns rendering into the shared `#modal` element — see
+// ui/search.ts's header for why that's safe. toggleSearch/toggleAdvisor below make sure only
+// one is ever open by closing the other first.
+const searchIndex = buildIndex(entries.values());
+const search = createSearch(mustFind('#modal'), searchIndex, { onSelect: focusEntry });
 
 // Orbital motion, twinkle/pulse and camera flights all freeze under prefers-reduced-motion
 // (ENGINE_SPEC §2) and, additionally, whenever the card is open (ENGINE_SPEC §4).
@@ -132,6 +141,7 @@ attachInput(canvas, camera, bodies, {
   onSelectEntry: (_bodyId, entryId) => focusEntry(entryId),
   onBack: goBack,
   onReset: goHome,
+  onToggleSearch: () => search.toggle(),
   onToggleHelp: () => help.toggle(),
   onHover(bodyId, entryId, clientX, clientY) {
     if (bodyId) {
