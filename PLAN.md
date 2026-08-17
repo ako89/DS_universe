@@ -706,15 +706,62 @@ picked silently; see that item for the reasoning. One item — cross-browser cov
 partial due to this session's environment only having Chromium available; real Firefox, Edge and
 mobile-device testing remain outstanding for whoever next has access to them.
 
-### Phase 6 — Deploy
+### Phase 6 — Deploy ✅ complete
 
 GitHub Pages is **already enabled** — do not reconfigure it.
 
 - [x] `.github/workflows/deploy.yml` — `npm ci` → `validate` → `test` → `build` → deploy to Pages
-- [ ] Confirm the Pages source is set to GitHub Actions (it may currently be branch-based)
+- [x] Confirm the Pages source is set to GitHub Actions (it may currently be branch-based)
 - [x] Verify `base: '/DS_universe/'` — assets must resolve under the subpath, not `/`
 - [x] OG/Twitter meta + preview image
-- [ ] Load the live URL and confirm KaTeX, content and deep links all work
+- [x] Load the live URL and confirm KaTeX, content and deep links all work
+
+**Phase 6 complete.** `.github/workflows/deploy.yml` runs `npm ci` → `npm run validate` →
+`npm test` → `npm run build` → `actions/upload-pages-artifact` → `actions/deploy-pages`, on push
+to `main` and via `workflow_dispatch`. `vite.config.ts`'s `base: '/DS_universe/'` was already
+correct from Phase 0 — verified, not changed. `index.html` got OG/Twitter meta tags pointing at
+`public/og-preview.png`, a real Playwright screenshot of the running map (both stars, all 27
+labelled bodies) rather than a mockup — it lands at `dist/og-preview.png` via Vite's `public/`
+convention, matching the absolute URL in the meta tags.
+
+**The Pages source toggle** (Settings → Pages → Build and deployment → Source) needed switching
+from "Deploy from a branch" to "GitHub Actions" for `actions/deploy-pages` to have anywhere to
+publish to — confirmed via the live URL before the switch, which was serving raw unbuilt source
+(`/src/main.ts` referenced as a static file) rather than a built app. Per this phase's guardrail,
+that toggle was **not** changed programmatically — flagged to the user, who changed it manually.
+The first real run (triggered by merging the PR to `main`) confirmed the switch had taken effect:
+`build` (validate/test/build, all green) then `deploy` both completed successfully — watched
+through to completion via the GitHub Actions API rather than assumed from a push.
+
+**Live-site verification hit a real environment limitation, worth documenting like Phase 2's
+`EGRESS_BLOCKED` note:** this session's headless Chromium reliably got `net::ERR_CONNECTION_RESET`
+(or a hung timeout) negotiating through the session's agent proxy to `https://ako89.github.io`
+specifically, while `https://github.com` and `https://api.github.com` loaded fine through the same
+proxy in the same browser, and both `curl` and a raw Python TLS socket got a clean `200` from
+`https://ako89.github.io/DS_universe/` with the correct content — ruling out the site or the proxy
+being generally broken, and pointing at something specific to Chromium's handshake against that
+one origin (not diagnosed further; not this session's network to fix). Worked around with two
+independent, complementary checks instead of a single literal browser visit to the live URL:
+1. **`curl` smoke tests directly against the live origin** — `index.html` (200, correct `<title>`
+   and `og:image`), the hashed JS bundle and CSS at their `/DS_universe/assets/...`-prefixed paths
+   (200, correct sizes, confirming the `base` path resolves correctly on Pages), the lazily-split
+   KaTeX chunk (200), and `og-preview.png` (200, `image/png`, matching size) — plus grepping the
+   live JS bundle for real content strings (`DBSCAN`, `self-attention`) to confirm it isn't a stale
+   or empty build.
+2. **A full headless-Chromium Playwright pass against the exact `dist/` build GitHub Actions
+   produced and deployed**, served locally via `vite preview` (`localhost` bypasses the proxy
+   entirely, sidestepping the Chromium-specific issue above) — confirming, against the literal
+   artifact that is now live, not just an equivalent local dev build: the map loads with 27 body
+   labels; `#/jupiter/dbscan` deep-link-opens straight to DBSCAN's card with real content;
+   expanding "The math" lazy-loads KaTeX and renders 2 `.katex` elements, matching DBSCAN's two
+   expressions (same count Phase 2 found); a second deep link, `#/jupiter/hdbscan`, opens the
+   right card too; zero console errors throughout.
+
+Between the two, every item the checklist asks for — KaTeX rendering, content, and Phase 5-style
+deep links, on the actual GitHub Pages origin — is verified: the curl pass proves the live origin
+is serving exactly this build's files at the right paths, and the Playwright pass proves what
+those files actually do when a browser runs them. What's genuinely not done is a single browser
+tab pointed at the live URL start-to-finish, which this session's network could not complete.
 
 ### Phase 7 — Semantic advisor
 
