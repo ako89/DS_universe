@@ -17,8 +17,9 @@ Setup: `npm install` first (no `node_modules` in a fresh clone). Validate with
 | # | Question | Decision |
 |---|---|---|
 | 1 | Mobile tap model | **Keep tap-to-preview.** First tap previews, second tap on the same target opens. Fix the reliability bugs underneath it. |
-| 3 | Group names on labels | **Two lines**: body name on top, full `segment` beneath in smaller, dimmer text. |
-| 4 | Guide location | **Expand the existing `?` overlay into a "Guide"**, with the keyboard-shortcut table as its final section. |
+| 3 | Where the family name goes | **Tooltip only**, in parentheses after the body name — `Jupiter (Clustering, Density & Anomaly)`. **Map labels stay name-only.** The body/star hook is removed from the tooltip. |
+| 4 | Guide location & shape | **Expand the existing `?` overlay into a "Guide"**. The family list is an **expand/collapse accordion** — one caret row per family, opening to its algorithms. Shortcut table last. |
+| 4b | Star naming | Clicking Sol or Nova shows the **system** name in parentheses: `Sol (Classical Statistical Learning)`, `Nova (Attention & Scale)`. |
 | 5 | Search affordance | **Always-visible search input on desktop; magnifier icon on mobile.** Advisor and Guide get icon buttons alongside. |
 
 ---
@@ -191,124 +192,109 @@ before/after to the commit message body or the PR description if one is opened.
 
 ---
 
-## Task 3 — Put the algorithm family on every label
+## Task 3 — Put the algorithm family in the tooltip
 
-**Decision: two lines** — body name on top, full `segment` beneath, smaller and dimmer.
+**Revised decision (supersedes the earlier two-line-label plan): the map label stays name-only.**
+Do not add a second line to `render/labels.ts`. The family name goes in the **tooltip**, in
+parentheses after the body name, and the tooltip's hook line is removed.
+
+This is a much smaller change than the superseded version and it removes the collision-thinning
+risk entirely — `labels.ts` and `main.css`'s `.body-label` are untouched by this task.
 
 ### Where the family name appears, all together
 
-`segment` is *already* rendered in three places, none of them visible before the user commits to
-a click — which is the whole complaint. Do not duplicate this work; extend it.
+`segment` already renders in three places, all of them downstream of a click — which is the
+complaint. This task adds the one surface that comes *before* the click.
 
-| Surface | Today | After this pass |
+| Surface | Today | After |
 |---|---|---|
-| Map label | name only | **name + segment (new, 3b)** |
-| Tooltip (hover / first-tap preview) | name, hook, meta | **+ segment (new, 3d)** |
-| Guide region list | — | **name + segment + moon count (new, Task 4)** |
+| Tooltip (hover / first-tap preview) | name, hook, meta | **name (family), meta — hook removed** |
+| Map label | name only | **unchanged — name only** |
+| Guide family list | — | **new, Task 4** |
 | Card eyebrow | segment (`card-sections.ts:38`) | unchanged |
 | Advisor result eyebrow | segment (`advisor.ts:51`) | unchanged |
 | Screen-reader map summary | segment (`a11y-status.ts:41`) | unchanged |
-| Breadcrumb | name only | unchanged — it is a short nav trail, not a description |
+| Breadcrumb | name only | unchanged — a short nav trail, not a description |
 
-### 3a. Stars need a segment too
+### 3a. Stars need two new fields
 
-`src/content/system.ts`'s `BodyPlacement` has `segment`; `StarPlacement` does **not**. Both stars
-already carry one in their content modules — `src/content/bodies/sol.ts` and `nova.ts` export a
-`Body` whose `segment` is `'The Objective'` and `'Attention & Scale'` respectively (matching
-PLAN.md §3's `☉ SOL — *The Objective*`). Add `segment: string` to `StarPlacement` and fill it
-from those two values. **Transcribe, do not invent.**
+`src/content/system.ts`'s `BodyPlacement` has `segment`; `StarPlacement` does **not**, so Sol and
+Nova — the two most important objects on the map — currently cannot show a family at all.
 
-Then `src/engine/scene.ts`'s `buildScene()` must set `segment` on the star branch of the scene
-push (it currently only sets it in `buildBody`).
+Add **two** fields to `StarPlacement`, because a star means two different things and overloading
+one field would make the Guide wrong:
 
-### 3b. Render the second line
-
-`src/render/labels.ts`. `LabelTarget` gains `segment?: string`; `main.ts` passes
-`body.segment` in the `labels.update(...)` mapping.
-
-In `ensure()`, build two child elements instead of setting `el.textContent`:
-
-```
-<div class="body-label" role="button" tabindex="…">
-  <span class="body-label-name">Jupiter</span>
-  <span class="body-label-segment">Clustering, Density &amp; Anomaly</span>
-</div>
+```ts
+export interface StarPlacement {
+  // …existing fields…
+  segment: string;      // the star's OWN moons  — 'The Objective' / 'Attention & Scale'
+  systemName: string;   // everything orbiting it — see below
+}
 ```
 
-Set the accessible name explicitly with `aria-label="Jupiter — Clustering, Density & Anomaly"` so
-the screen reader gets one coherent string rather than two fragments. Check
-`src/ui/a11y-status.ts` and `populateSummary` for whether the segment should be announced there
-too; keep them consistent.
+- `segment` — transcribe from the star's own content module: `sol.ts` has
+  `segment: 'The Objective'` (its 6 moons are ERM, loss functions, MLE/MAP, gradient descent,
+  bias–variance, convexity/no-free-lunch); `nova.ts` has `segment: 'Attention & Scale'`.
+- `systemName` — names **the whole system orbiting that star**, which is what the user asked for.
+  Use PLAN.md §3's own wording, which is already in exactly this parenthetical form: *"**Sol**
+  (classical statistical learning) at the origin, **Nova** (attention and scale) far out."*
+  So: Sol → `'Classical Statistical Learning'`, Nova → `'Attention & Scale'`.
 
-**Critical:** the label box is measured **once at creation** (`el.getBoundingClientRect()`), and
-that measurement feeds the collision thinner. A two-line label is roughly twice as tall and much
-wider, so with no other change the thinner will hide far more labels than it does today. Handle
-it explicitly:
+  Both are transcribed, not invented. Note Nova's two values coincide; Sol's do not, which is
+  exactly why the two fields are separate.
 
-- Measure both lines; store `width` (the wider of the two lines) and `height` (both lines).
-- **Graceful degradation:** when a label's full two-line box collides with an already-placed
-  label but its *name-only* box would not, place it with the segment line hidden (a
-  `.is-compact` class setting `display: none` on `.body-label-segment`) rather than hiding the
-  label entirely. Store both boxes at creation time so the per-frame path stays measurement-free
-  — the file's header comment commits to per-frame updates touching only `transform`, and that
-  must stay true.
-- The existing focused-label exemption must keep working. Re-read the `display: none` blurs
-  focus comment in that file before changing the placement loop.
+Then `src/engine/scene.ts`'s `buildScene()` must carry both onto the star branch of the scene
+push (it currently sets `segment` only in `buildBody`). Add `systemName?: string` to `SceneBody`.
 
-### 3c. Styles
+### 3b. Rewrite the tooltip
 
-`src/styles/main.css`, alongside `.body-label`:
+`src/ui/tooltip.ts`, `describe()`. Three changes, and no others.
 
-- `.body-label` — becomes a flex column, `align-items: center`, `text-align: center`. Drop
-  `white-space: nowrap` from the container and apply it per-line, or the segment will wrap
-  unpredictably. Consider `max-width: 22ch` on the segment with the two-line-wrap allowed —
-  decide by eye against the longest segment, `Dimensionality Reduction & Representation`.
-- `.body-label-name` — as `.body-label` reads today (`--fs-xs`, `--text-dim`).
-- `.body-label-segment` — smaller and fainter: `font-size: 0.6875rem` (add a `--fs-2xs` token to
-  `tokens.css` if you prefer keeping every size in one file, which the file header asks for) and
-  `color: var(--text-faint)`. Keep the `text-shadow` on both lines; it is what makes labels
-  legible over the starfield.
-- On mobile (`@media (max-width: 859px)`), hiding `.body-label-segment` outright is acceptable
-  **provided 3d ships** — the first-tap tooltip then carries the family name at the moment it is
-  needed, and screen width is scarce. Judge by screenshot; if the labels are legible with both
-  lines, keep both.
+**1. Parenthesise the family in the title.** For a planet/belt, `Jupiter (Clustering, Density &
+Anomaly)`. For a star, use `systemName`, not `segment`: `Sol (Classical Statistical Learning)`,
+`Nova (Attention & Scale)`.
 
-### 3d. Put the family name in the tooltip
-
-`src/ui/tooltip.ts`'s `describe()` builds the body case as `{title, hook, meta}` where `meta` is
-`"${moonCount} moons · ${eraRange}"`. It never shows `segment`. That is the highest-value single
-line in this task: on desktop the tooltip is what hover produces, and on mobile — given the
-tap-to-preview model kept in Task 1 — the tooltip **is** the preview, the exact moment the user
-is deciding whether to tap again.
-
-Add the segment to the body branch. Prefer a dedicated field over stuffing it into `meta`, so the
-tooltip can style it like the card's eyebrow rather than like the mono meta line:
+Keep the parenthetical as its own field rather than concatenating into `title`, so the renderer
+can style it (lighter weight / `--text-dim`) and so `a11y-status.ts` can join it cleanly:
 
 ```ts
 export interface TooltipContent {
   title: string;
-  eyebrow?: string;   // the body's segment — its algorithm family
-  hook?: string;
+  family?: string;   // rendered as "Title (family)"
+  hook?: string;     // entries only now — see below
   meta: string;
 }
 ```
 
-Read it from `contentBodies.get(bodyId)?.segment`, falling back to the `placement` once
-`StarPlacement` gains the field in 3a. Render it above the title with a `.tooltip-eyebrow` class
-in `overlay.css`, mirroring `.card-eyebrow`.
+**2. Drop the hook from body and star tooltips.** In `describe()`'s body branch, stop setting
+`hook`. The `Body.hook` strings are evocative region descriptions ("The inner star: pick a model,
+define a loss…") and read as confusing next to a concrete family name.
 
-Leave the **entry** branch alone — a moon's tooltip already shows its own name, and its parent's
-family is one level of context it does not need mid-hover.
+**Explicit reading of the instruction, correct this if wrong:** the hook is removed from
+**body and star** tooltips only. A **moon's** tooltip keeps its `Entry.hook`, because that is a
+plain one-line description of a single algorithm and — with tap-to-preview kept on mobile
+(Task 1) — it is the entire payload of the first-tap preview. Removing it would leave a moon
+preview showing nothing but a name and `Tier 2 · difficulty 3/5 · 1996`.
+
+**3. Update `render()`** to emit the parenthetical and to stop emitting `.tooltip-hook` when
+there is no hook. The `↵ enter` suffix on the meta line still needs the touch-aware treatment
+from Task 1d.
+
+`src/styles/overlay.css`: add `.tooltip-family` (inline after the title, `--text-dim`, normal
+weight against the title's 600). `.tooltip-hook` stays for the moon case.
+
+### 3c. Keep the screen reader in sync
 
 `src/ui/a11y-status.ts`'s `createStatusAnnouncer` reuses `describe()` and joins
-`[title, hook, meta]`. Add `eyebrow` to that join so the screen reader announces the family too,
-or it will silently fall out of sync with what sighted users see.
+`[title, hook, meta]`. Update the join to include `family` and to tolerate the now-absent body
+hook, so a screen reader hears "Jupiter, Clustering, Density and Anomaly, 10 moons, 1996 to 2017"
+rather than dropping the family silently.
 
 ### Acceptance
 
-At default framing, every visible label shows its family and the map is not a wall of text.
-Hovering a body (or first-tapping it on touch) shows its family in the tooltip.
-Zoomed in on one body, its label shows both lines. No label overlaps another.
+Hovering Jupiter shows `Jupiter (Clustering, Density & Anomaly)` with no hook line. Hovering Sol
+shows `Sol (Classical Statistical Learning)`. Hovering a moon still shows its one-line hook. Map
+labels are visually unchanged from today. The live region announces the family.
 
 ---
 
@@ -330,11 +316,13 @@ throws loudly if they diverge, so a mismatch cannot ship silently.
    gesture changes later, this text changes with it).
 2. **The two stars.** Straight from PLAN.md §3: *Sol* (classical statistical learning) at the
    origin, *Nova* (attention and scale) far out; deep-learning bodies sit in the transit between
-   them, and bodies past the midpoint render lit from Nova rather than Sol. Add each star's own
-   `hook` from `content/bodies/{sol,nova}.ts` — Nova's is
-   *"The outer star: attention as the sole primitive, and what happens once you scale it up."*
-   Sol's is *"The inner star: pick a model, define a loss, minimize it over data — the objective
-   every planet runs on."* Quote them verbatim; both are already researched and sourced.
+   them, and bodies past the midpoint render lit from Nova rather than Sol.
+
+   **Do not quote the stars' `hook` strings here** — the same "confusing" text being removed from
+   the tooltip in Task 3b should not reappear in the Guide. Use the `systemName` from Task 3a plus
+   plain prose about what each system holds. Do say, in one line each, that a star also has its
+   own six moons (Sol: the objective every model minimizes; Nova: attention itself), since that is
+   otherwise surprising when a star is clicked.
 3. **How things are ordered.** Two honest, checkable facts, both true of the current build:
    - Bodies orbit outward roughly by increasing complexity and recency — the inner Sol system is
      classical and foundational, the Belt is the craft, the mid system is structure and
@@ -345,14 +333,56 @@ throws loudly if they diverge, so a mismatch cannot ship silently.
      foundational first, then variants and successors.
    - Tier 1 entries get a full card; Tier 2 are stubs, and render smaller and dimmer (PLAN.md
      §2). Say so, so a thin card reads as intentional rather than missing.
-4. **Every region and its family.** The wayfinding payload, and the direct answer to "I'm just
-   guessing what body is what algorithm family." Build this list **at runtime** from
-   `content/system.ts` — do not hand-write it, or it will drift. For each star and body: name,
-   `segment`, and moon count. Group under three headings by `litBy` plus the belt. Each row
-   should be a button that closes the Guide and flies to that body (reuse `main.ts`'s
-   `goToBody`; pass it in through the handlers object the way `createCard` takes `onRelated`).
+4. **The family accordion.** The wayfinding payload, and the direct answer to "I'm just guessing
+   what body is what algorithm family." See its own section below — this is the centrepiece of the
+   Guide, not a footnote.
 5. **Keyboard shortcuts.** The existing `<dl>`, unchanged, last. Add the new toolbar buttons' own
    affordances if any shortcut changes.
+
+### The family accordion
+
+One collapsed row per family, each expanding to the algorithms inside it. Use native
+`<details>`/`<summary>` — it gives the caret marker, keyboard operation, and correct
+`aria-expanded` semantics for free, and `ui/card.ts` already uses the same element for the math
+and code sections, so the Guide matches the card.
+
+Collapsed, one row per family:
+
+```
+▸ Mercury — Linear & Probabilistic Foundations              9
+▸ Venus — Similarity & Instance-Based                       6
+▾ Jupiter — Clustering, Density & Anomaly                  10
+     k-Means & k-Means++                            Tier 1
+     Hierarchical clustering                        Tier 1
+     DBSCAN                                         Tier 1
+     …
+▸ Saturn — Dimensionality Reduction & Representation        9
+```
+
+Rules:
+
+- **Build it at runtime**, never hand-written, or it drifts the moment content changes. Families
+  and their order come from `content/system.ts`; the algorithm names inside come from
+  `data/registry.ts` (`bodies.get(id)?.moons` → `entry.name`, `entry.tier`), which is already the
+  declaration order the moons orbit in.
+- **Group into three sections** matching the map: the Sol system, the transit, and the Nova
+  system. `litBy` alone does not give this — Echo onward is `litBy: 'nova'` while still being
+  transit — so derive the transit from the `prometheus`…`odyssey` run in `system.ts`'s declaration
+  order, and leave a comment saying so. The Belt sits in the Sol section.
+- **Both stars get a row too**, at the top of their section, labelled with `systemName` and
+  listing their own six moons.
+- **Every row is navigable.** The `<summary>` carries a "go there" button that closes the Guide
+  and calls `goToBody`; each algorithm inside is a button calling `focusEntry`. Pass both in
+  through the handlers object, the way `createCard` takes `onRelated` — the Guide must not import
+  navigation directly.
+- **Do not put a button inside `<summary>`'s clickable area** in a way that makes the caret
+  unclickable. Put the family name in the `<summary>` (click = expand/collapse) and a small
+  separate "fly here" affordance beside it, or make the algorithm rows the only navigation and
+  leave `<summary>` purely for expansion. Either is fine; pick one and be consistent.
+- Style `<summary>` with `list-style: none` + a custom `::marker`/`::before` caret only if the
+  native marker looks wrong against the panel — prefer the native one.
+- With 27 families and ~195 algorithms, everything collapsed by default. The panel keeps its
+  internal `overflow-y: auto`.
 
 ### Structure and styles
 
@@ -360,8 +390,9 @@ Keep it under the 300-line file cap — if the section builders push past it, sp
 `src/ui/guide-sections.ts`, mirroring the `card.ts` / `card-sections.ts` split.
 
 `src/styles/overlay.css`: `.help-panel` is `width: min(480px, 90vw); max-height: 80vh`. The Guide
-is much longer — widen to `min(640px, 92vw)`, keep the internal `overflow-y: auto`, and make the
-region list a two-column grid on desktop collapsing to one below 860px.
+is much longer — widen to `min(640px, 92vw)` and keep the internal `overflow-y: auto`. The
+accordion is a single column at every width; a two-column layout would break the scan-down-the-
+carets reading the list is for.
 
 Focus trapping, Esc-to-close and the scrim click already work via `trapFocus` — preserve them.
 `goBack` in `main.ts` closes help before popping the view level; keep that behaviour.
@@ -369,7 +400,9 @@ Focus trapping, Esc-to-close and the scrim click already work via `trapFocus` �
 ### Acceptance
 
 `?` opens a Guide that answers, without leaving the panel: what am I looking at, what is Sol vs
-Nova, what family is each body, and what does clicking do. Every region row navigates correctly.
+Nova, what family is each body, and what does clicking do. Every family expands and collapses by
+click and by keyboard; every algorithm row navigates to that algorithm's card. The list is
+generated — adding an entry to a content module makes it appear with no edit to the Guide.
 Keyboard-only operation and screen-reader traversal still work.
 
 ---
@@ -452,13 +485,13 @@ produces results without ever pressing `/`.
 
 ## Sequencing and commits
 
-Do them in this order — Task 1 is the actual bug, and Task 3 changes the same label geometry
-Task 4's region list describes.
+Do them in this order — Task 1 is the actual bug, and Task 3's new `StarPlacement` fields are
+what Task 4's accordion labels the two stars with.
 
 1. `Fix mobile tap handling: cumulative drag threshold, no double-pan, preview hold`
 2. `Dim the background starfield; strengthen Sol and Nova`
-3. `Show each body's algorithm family beneath its name`
-4. `Expand the ? overlay into a full Guide`
+3. `Name each body's algorithm family in the tooltip; drop the region hook`
+4. `Expand the ? overlay into a Guide with an expandable family list`
 5. `Add a visible search box (desktop) and search button (mobile)`
 
 Each commit must leave `npm test && npm run validate && npm run build` green. Branch:
@@ -472,8 +505,19 @@ anything tracked there.
 
 - If dimming the starfield to the values above makes the map feel empty rather than calm, say so
   and propose numbers, rather than silently splitting the difference.
-- If the two-line labels still crowd the map after the compact-fallback in 3b, report it with a
-  screenshot — the fix may be to show the segment line only for the focused/hovered body, which
-  is a change to a decision the user already made and needs their sign-off.
+- **The moon-tooltip hook.** Task 3b removes the hook from body and star tooltips only, and keeps
+  it for individual algorithms. That is an interpretation of "get rid of the hook in the tooltip"
+  — both of the user's mentions were about bodies and stars. If they meant *all* tooltips, it is a
+  one-line change, but say so first: on mobile the first-tap preview would then show only a name
+  and `Tier 2 · difficulty 3/5 · 1996`, which is close to useless for deciding whether to tap
+  again.
+- **Sol's two names.** `segment` ('The Objective', its own six moons) and `systemName`
+  ('Classical Statistical Learning', everything orbiting it) are deliberately different, and the
+  tooltip shows the latter. If clicking Sol and reading "Classical Statistical Learning" over a
+  set of moons that are actually loss functions and gradient descent reads wrong on screen, report
+  it — the fix is a wording call the user should make, not a silent swap to `segment`.
+- Long family names in the tooltip title (`Saturn (Dimensionality Reduction & Representation)`)
+  push against `.tooltip`'s `max-width: 280px`. Let it wrap; if it wraps to three lines and looks
+  bad, report it rather than truncating a family name.
 - Any place these tasks would require asserting a fact about an algorithm that is not already
   written in the repo: stop and ask. PLAN.md §0 rule 14.
