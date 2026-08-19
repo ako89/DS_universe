@@ -3,7 +3,7 @@
  * loop. Logic belongs in engine/, ui/ and data/ — this file only wires their public APIs.
  *
  * Longer than PLAN.md §0's ~80-line guideline for this file now that Phase 2 wires in
- * tooltip/card/breadcrumb/help: every function here is 1-5 lines of orchestration (view-state
+ * tooltip/card/breadcrumb/guide: every function here is 1-5 lines of orchestration (view-state
  * transition + a camera.flyTo + a UI-module call), not logic, which is what that rule is
  * actually guarding against. Still well under the 300-line hard cap.
  */
@@ -22,7 +22,8 @@ import { createLabelLayer } from './render/labels.ts';
 import { createTooltip } from './ui/tooltip.ts';
 import { createCard } from './ui/card.ts';
 import { createBreadcrumb } from './ui/breadcrumb.ts';
-import { createHelp } from './ui/help.ts';
+import { createToolbar } from './ui/toolbar.ts';
+import { createGuide } from './ui/guide.ts';
 import { createSearch } from './ui/search.ts';
 import { createAdvisor } from './ui/advisor.ts';
 import { createStatusAnnouncer, populateSummary } from './ui/a11y-status.ts';
@@ -77,13 +78,31 @@ populateSummary(mustFind('#a11y-summary'), bodies);
 // reader live region together, so all three always agree.
 let highlight: Highlight = {};
 
-function setHighlight(bodyId: string | null, entryId: string | undefined, clientX?: number, clientY?: number): void {
+// Orbital motion holds as soon as anything is highlighted (desktop hover, mobile first tap, or
+// keyboard focus) and stays held even once the hover/focus moves off — deliberately *not* tied
+// to `highlight` itself, which clears on every ordinary hover-off. Only an explicit "away" action
+// (click/tap on empty space, zoom out, Esc/back to the universe) releases it — see
+// clearMotionHold and its call sites below.
+let motionHeld = false;
+
+function clearMotionHold(): void {
+  motionHeld = false;
+}
+
+function setHighlight(
+  bodyId: string | null,
+  entryId: string | undefined,
+  clientX?: number,
+  clientY?: number,
+  source: 'mouse' | 'touch' = 'mouse',
+): void {
   highlight = bodyId ? { bodyId, ...(entryId !== undefined ? { entryId } : {}) } : {};
   if (bodyId && clientX !== undefined && clientY !== undefined) {
-    tooltip.show(bodyId, entryId, clientX, clientY);
+    tooltip.show(bodyId, entryId, clientX, clientY, source);
   } else if (!bodyId) {
     tooltip.hide();
   }
+  if (bodyId) motionHeld = true;
   statusAnnouncer.update(bodyId, entryId);
 }
 
@@ -94,12 +113,22 @@ const labels = createLabelLayer(overlay, {
       setHighlight(id, undefined, anchor.left + anchor.width / 2, anchor.bottom);
     } else {
       setHighlight(null, undefined);
+      // A blur with no `id` means keyboard focus left this label; if nothing else claims focus
+      // right after (the usual case is Tab landing on the *next* label, which re-holds via
+      // setHighlight above before this fires), the user has Tabbed out of the map entirely. With
+      // no highlight left on screen and no mouse-driven "click empty space" available to a
+      // keyboard-only user, releasing here is the only way the hold doesn't stay stuck forever.
+      window.setTimeout(() => {
+        if (!(document.activeElement instanceof HTMLElement && document.activeElement.classList.contains('body-label'))) {
+          clearMotionHold();
+        }
+      }, 0);
     }
   },
   isEntered: (id) => picking.view.level !== 'universe' && picking.view.bodyId === id,
 });
 const breadcrumb = createBreadcrumb({ onRoot: goHome, onBody: goToBody });
-const help = createHelp(mustFind('#help'));
+const guide = createGuide(mustFind('#guide'), { onGoToBody: goToBody, onGoToEntry: focusEntry });
 const card = createCard(mustFind('#card'), {
   onRelated: focusEntry,
   onClose: goBack,
@@ -120,6 +149,15 @@ function toggleAdvisor(): void {
   search.close();
   advisor.toggle();
 }
+
+// ui/toolbar.ts's search box/button always *opens* the palette (never toggles it closed) — a
+// second click on a visible toolbar control reads as "open this", not "close whatever's open".
+function openSearchFromToolbar(): void {
+  advisor.close();
+  search.open();
+}
+
+createToolbar({ onSearch: openSearchFromToolbar, onAdvisor: toggleAdvisor, onGuide: () => guide.toggle() });
 
 // Orbital motion, twinkle/pulse and camera flights all freeze under prefers-reduced-motion
 // (ENGINE_SPEC §2) and, additionally, whenever the card is open (ENGINE_SPEC §4).
@@ -161,6 +199,7 @@ function goHome(): void {
   picking.reset();
   card.close();
   flyHome();
+  clearMotionHold();
   syncView();
 }
 
@@ -175,14 +214,15 @@ function goToBody(bodyId: string): void {
 }
 
 function goBack(): void {
-  if (help.isOpen()) {
-    help.close();
+  if (guide.isOpen()) {
+    guide.close();
     return;
   }
   picking.back();
   if (picking.view.level === 'universe') {
     card.close();
     flyHome();
+    clearMotionHold();
   } else if (picking.view.level === 'body') {
     card.close();
   }
@@ -243,8 +283,9 @@ attachInput(canvas, camera, bodies, {
   onReset: goHome,
   onToggleSearch: toggleSearch,
   onToggleAdvisor: toggleAdvisor,
-  onToggleHelp: () => help.toggle(),
+  onToggleHelp: () => guide.toggle(),
   onHover: setHighlight,
+  onClearHighlight: clearMotionHold,
   getFocusBodyId: () => (picking.view.level === 'universe' ? undefined : picking.view.bodyId),
   getFocusEntryId: () => (picking.view.level === 'detail' ? picking.view.entryId : undefined),
 });
@@ -261,13 +302,20 @@ let clock = 0; // elapsed time fed to time-driven visuals (twinkle, pulse, gas d
 // under reduced motion, and while the card is open, instead of advancing every frame.
 
 startLoop((dt, t) => {
-  const motionActive = !reduceMotion && !card.isOpen();
+  // Positions (orbital motion) additionally freeze while anything is highlighted — a desktop
+  // hover or a mobile first tap — so the target a tooltip is pointing at doesn't drift out from
+  // under a second click/tap. Visuals (twinkle, star pulse, gas drift) keep going regardless:
+  // gating them on highlight too would make the whole scene read as dead the moment something is
+  // hovered, which is not the ask — only orbital drift is the problem. See setHighlight/
+  // clearHighlightHold below for what sets/releases motionHeld.
+  const visualsMoving = !reduceMotion && !card.isOpen();
+  const positionsMoving = visualsMoving && !motionHeld;
   camera.update(reduceMotion ? 0 : dt);
   // Zoomed-in bodies/moons ease toward near-stationary (motionTimeScale) so they don't drift out
-  // of frame before they can be clicked; the card-open/reduced-motion freeze above still wins
-  // outright via `paused` regardless of zoom.
-  updateScene(bodies, dt * motionTimeScale(camera.zoom), !motionActive);
-  if (motionActive) clock = t;
+  // of frame before they can be clicked; the card-open/reduced-motion/highlight freezes above
+  // still win outright via `paused` regardless of zoom.
+  updateScene(bodies, dt * motionTimeScale(camera.zoom), !positionsMoving);
+  if (visualsMoving) clock = t;
 
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, camera.vw, camera.vh);

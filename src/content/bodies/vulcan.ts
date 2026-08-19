@@ -149,7 +149,7 @@ export const body = {
   id: 'vulcan',
   name: 'Vulcan',
   segment: 'Convolutional Networks & Vision',
-  hook: 'The forge of computer vision: shared filters, then depth, then skip connections, then the challenge from attention itself.',
+  hook: 'Shared filters, then depth, then skip connections, then the challenge from attention itself.',
   summary:
     'Vulcan collects the architectures that taught networks to see — from the shared, position-invariant filter that ' +
     'makes convolution cheap, through the arc of ever-deeper classifiers, to the detection and segmentation heads built ' +

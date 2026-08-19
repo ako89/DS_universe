@@ -57,10 +57,13 @@ export const MOTION_SLOWDOWN_ZOOM_START = 0.6;
  *  prefers-reduced-motion) and this isn't meant to duplicate it. */
 export const MOTION_MIN_SCALE = 0.04;
 
+// Dimmed and thinned (docs/UX_PASS_PLAN.md Task 2a) so the background reads as depth rather than
+// competing for a click against Sol, Nova and the bodies. Roughly a 55% cut in alpha and a 25%
+// cut in density from the original Phase 0 values, tuned by eye rather than derived.
 export const STAR_LAYERS = [
-  { count: 700, parallax: 0.15, size: [0.6, 1.2], alpha: [0.25, 0.55] },
-  { count: 320, parallax: 0.4, size: [0.9, 1.8], alpha: [0.35, 0.75] },
-  { count: 140, parallax: 0.8, size: [1.2, 2.6], alpha: [0.5, 0.95] },
+  { count: 520, parallax: 0.15, size: [0.6, 1.2], alpha: [0.1, 0.26] },
+  { count: 240, parallax: 0.4, size: [0.9, 1.8], alpha: [0.14, 0.34] },
+  { count: 100, parallax: 0.8, size: [1.2, 2.6], alpha: [0.2, 0.46] },
 ] as const;
 
 /** Seeds for anything procedural, so belts and starfields are stable across reloads

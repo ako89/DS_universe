@@ -1,7 +1,7 @@
 /**
  * Traps Tab/Shift+Tab focus cycling within `container`'s focusable elements while `isActive()`
  * is true, stopping propagation so a global handler (e.g. engine/input.ts's Tab-cycles-bodies
- * shortcut) doesn't also fire. Shared by ui/card.ts and ui/help.ts — both open as an overlay the
+ * shortcut) doesn't also fire. Shared by ui/card.ts and ui/guide.ts — both open as an overlay the
  * user tabs around inside of and Esc's out of.
  */
 

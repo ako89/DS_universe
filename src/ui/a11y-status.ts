@@ -60,7 +60,10 @@ export function createStatusAnnouncer(container: HTMLElement): StatusAnnouncer {
       return;
     }
     const content = describe(bodyId, entryId);
-    container.textContent = content ? [content.title, content.hook, content.meta].filter(Boolean).join('. ') : '';
+    const title = content?.family ? `${content.title}, ${content.family}` : content?.title;
+    container.textContent = content
+      ? [title, content.hook, content.starMoonNote, content.meta].filter(Boolean).join('. ')
+      : '';
   }
 
   function announce(message: string): void {

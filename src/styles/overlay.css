@@ -25,10 +25,23 @@
   color: var(--text);
 }
 
+.tooltip-family {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
 .tooltip-hook {
   margin-top: var(--s-1);
   font-size: var(--fs-xs);
   color: var(--text-dim);
+  line-height: var(--lh-body);
+}
+
+.tooltip-star-note {
+  margin-top: var(--s-1);
+  font-size: var(--fs-xs);
+  font-style: italic;
+  color: var(--text-faint);
   line-height: var(--lh-body);
 }
 
@@ -153,6 +166,159 @@
 .help-close:focus-visible {
   color: var(--text);
   background: var(--hairline);
+}
+
+/* The Guide ("?"). Reuses .help-scrim/.help-panel above (Task 4 grew the plain shortcut overlay
+   into this) — .guide-panel only widens it, since the Guide has far more content than a single
+   shortcut table. Single column at every width: with 27 families and ~195 algorithms, this is a
+   list to scan down, not a grid to read across. */
+.guide-panel {
+  width: min(640px, 92vw);
+  position: relative;
+}
+
+.guide-section + .guide-section {
+  margin-top: var(--s-6);
+}
+
+.guide-section h3 {
+  margin: 0 0 var(--s-3);
+  font-size: var(--fs-base);
+  color: var(--text);
+}
+
+.guide-prose {
+  margin: 0 0 var(--s-2);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  max-width: var(--measure);
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.guide-list li + li {
+  margin-top: var(--s-2);
+}
+
+.guide-group-label {
+  margin: var(--s-5) 0 var(--s-2);
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.guide-group-label:first-of-type {
+  margin-top: var(--s-3);
+}
+
+.guide-row {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.guide-row-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+/* Custom caret, one glyph, so ::marker's default (which renders differently across browsers and
+   doesn't accept color easily) doesn't need overriding piecemeal. */
+.guide-row-summary::-webkit-details-marker {
+  display: none;
+}
+
+.guide-row-summary::before {
+  content: '▸';
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  transition: transform var(--dur-fast) ease;
+}
+
+.guide-row[open] > .guide-row-summary::before {
+  transform: rotate(90deg);
+}
+
+.guide-row-label {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guide-row-name {
+  font-weight: 600;
+}
+
+.guide-row-count {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+}
+
+.guide-row-goto {
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.guide-row-goto:hover,
+.guide-row-goto:focus-visible {
+  color: var(--text);
+  background: var(--hairline);
+}
+
+.guide-row-moons {
+  margin: 0 0 var(--s-3);
+  padding: 0 0 0 var(--s-5);
+  list-style: none;
+}
+
+.guide-row-moons li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: var(--s-1) 0;
+}
+
+.guide-moon-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.guide-moon-link:hover,
+.guide-moon-link:focus-visible {
+  color: var(--focus);
+}
+
+.guide-moon-tier {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
 }
 
 /* Search palette ("/") and advisor ("A"). Both render into the shared `#modal` element (see
@@ -371,5 +537,98 @@
   .advisor-result-cols {
     grid-template-columns: 1fr;
     gap: var(--s-2);
+  }
+}
+
+/* Toolbar (docs/UX_PASS_PLAN.md Task 5): the always-visible search/advisor/guide cluster,
+   top-right, mirroring the breadcrumb's top-left placement. Positioning wrapper is
+   pointer-events:none (same pattern as #overlay in main.css) so it never steals a canvas drag
+   that happens to pass under its empty margin; pointer-events come back on the bar itself. */
+.toolbar-layer {
+  position: fixed;
+  top: var(--s-4);
+  right: var(--s-4);
+  z-index: var(--z-overlay);
+  pointer-events: none;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  pointer-events: auto;
+}
+
+.toolbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-search-input {
+  width: 220px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-raised);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.toolbar-search-input::placeholder {
+  color: var(--text-faint);
+}
+
+.toolbar-search-input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.toolbar-search-icon-btn {
+  display: none; /* shown in place of the input below MOBILE_BREAKPOINT */
+}
+
+.toolbar-btn,
+.toolbar-search-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline-strong);
+  background: var(--bg-raised);
+  backdrop-filter: blur(12px);
+  color: var(--text-dim);
+  font-size: var(--fs-base);
+  cursor: pointer;
+}
+
+.toolbar-btn:hover,
+.toolbar-btn:focus-visible,
+.toolbar-search-icon-btn:hover,
+.toolbar-search-icon-btn:focus-visible {
+  color: var(--text);
+  background: var(--hairline);
+}
+
+.toolbar-btn:focus-visible,
+.toolbar-search-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Below MOBILE_BREAKPOINT (860px — engine/constants.ts, same breakpoint the card's bottom-sheet
+   layout uses): the real input gives way to a same-size icon button that opens the palette
+   empty, matching every other toolbar control's icon-only footprint at this width. */
+@media (max-width: 859px) {
+  .toolbar-search-input {
+    display: none;
+  }
+
+  .toolbar-search-icon-btn {
+    display: flex;
   }
 }

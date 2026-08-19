@@ -83,7 +83,10 @@ export function createStarfield(): Starfield {
   return {
     draw(ctx: CanvasRenderingContext2D, camera: Camera, t: number): void {
       for (const tile of tiles) {
-        const alpha = 0.9 + 0.1 * Math.sin(t * tile.twinkleRate + tile.twinklePhase);
+        // Amplitude reduced from Phase 0's ±0.1 (docs/UX_PASS_PLAN.md Task 2a) — motion in the
+        // periphery reads as distracting independent of brightness, so on top of the dimmer base
+        // alpha above, the twinkle itself is calmed down too.
+        const alpha = 0.96 + 0.04 * Math.sin(t * tile.twinkleRate + tile.twinklePhase);
         blitTiled(ctx, tile.canvas, -camera.x * tile.parallax, -camera.y * tile.parallax, camera.vw, camera.vh, alpha);
       }
     },

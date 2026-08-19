@@ -27,6 +27,20 @@ export interface StarPlacement {
   hue: number;
   radius: number;
   moonCount: number;
+  /** The star's OWN moons' family — what its 6 moons are, transcribed verbatim from its content
+   *  module (content/bodies/{sol,nova}.ts's `Body.segment`). Not the same thing as `systemName`
+   *  below: Sol's segment is "The Objective" (ERM, loss functions, MLE/MAP, gradient descent,
+   *  bias-variance, convexity/no-free-lunch), which is a different fact from what the *whole
+   *  system orbiting Sol* is. */
+  segment: string;
+  /** What the whole system orbiting this star studies, for the tooltip's "Sol (…)" parenthetical
+   *  — transcribed verbatim from PLAN.md §3's own framing: "Sol (classical statistical learning)
+   *  at the origin, Nova (attention and scale) far out." */
+  systemName: string;
+  /** One sentence explaining that this star's own moons are foundations/building blocks, not
+   *  algorithms — shown in a moon-of-a-star's tooltip, where "why isn't this just a planet?" is
+   *  otherwise a fair question. See ui/tooltip.ts's describe(). */
+  moonNote: string;
 }
 
 export interface BodyPlacement {
@@ -45,8 +59,16 @@ export interface BodyPlacement {
 
 export const system = {
   stars: [
-    { id: 'sol', name: 'Sol', at: [0, 0], hue: 42, radius: 46, moonCount: 6 },
-    { id: 'nova', name: 'Nova', at: [4200, 0], hue: 194, radius: 38, moonCount: 6 },
+    {
+      id: 'sol', name: 'Sol', at: [0, 0], hue: 42, radius: 46, moonCount: 6,
+      segment: 'The Objective', systemName: 'Classical Statistical Learning',
+      moonNote: 'A foundation every algorithm on every planet is an instance of — not a model in itself.',
+    },
+    {
+      id: 'nova', name: 'Nova', at: [4200, 0], hue: 194, radius: 38, moonCount: 6,
+      segment: 'Attention & Scale', systemName: 'Attention & Scale',
+      moonNote: 'A building block the models in this system are assembled from — not a model in itself.',
+    },
   ],
   bodies: [
     // --- Sol system, inner (amber -> rust) ---

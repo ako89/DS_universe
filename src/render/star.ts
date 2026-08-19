@@ -44,15 +44,18 @@ function buildCache(ctx: CanvasRenderingContext2D, star: StarVisual, radiusBucke
   core.addColorStop(0.65, `hsl(${hue}, 100%, 78%)`);
   core.addColorStop(1, `hsla(${hue}, 100%, 65%, 0)`);
 
+  // Widened and strengthened further still (docs/UX_PASS_PLAN.md Task 2b), on top of the dimmer
+  // background starfield from Task 2a — Sol and Nova should read as the map's two anchors, not
+  // just avoid being lost in the background.
   const mid = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 2.2);
-  mid.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.62)`);
+  mid.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.7)`);
   mid.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
 
-  const outer = ctx.createRadialGradient(0, 0, r * 1.5, 0, 0, r * 4.5);
-  outer.addColorStop(0, `hsla(${hue}, 95%, 65%, 0.26)`);
+  const outer = ctx.createRadialGradient(0, 0, r * 1.5, 0, 0, r * 6.0);
+  outer.addColorStop(0, `hsla(${hue}, 95%, 65%, 0.34)`);
   outer.addColorStop(1, `hsla(${hue}, 95%, 65%, 0)`);
 
-  const flare = ctx.createLinearGradient(0, 0, r * 3.2, 0);
+  const flare = ctx.createLinearGradient(0, 0, r * 4.2, 0);
   flare.addColorStop(0, `hsla(${hue}, 90%, 92%, 0.6)`);
   flare.addColorStop(1, `hsla(${hue}, 90%, 92%, 0)`);
 
@@ -79,7 +82,7 @@ function getCache(ctx: CanvasRenderingContext2D, star: StarVisual, screenRadius:
 }
 
 function drawFlareSpikes(ctx: CanvasRenderingContext2D, r: number, gradient: CanvasGradient, alpha: number): void {
-  const length = r * 3.2;
+  const length = r * 4.2; // matches buildCache's flare gradient extent
   const width = Math.max(1.5, r * 0.12);
 
   ctx.save();
@@ -117,7 +120,7 @@ export function drawStar(ctx: CanvasRenderingContext2D, camera: Camera, star: St
   ctx.globalAlpha = pulse;
   ctx.fillStyle = visuals.outer;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 4.5, 0, Math.PI * 2);
+  ctx.arc(0, 0, r * 6.0, 0, Math.PI * 2); // matches buildCache's outer gradient extent
   ctx.fill();
 
   ctx.fillStyle = visuals.mid;
@@ -139,5 +142,33 @@ export function drawStar(ctx: CanvasRenderingContext2D, camera: Camera, star: St
   ctx.arc(0, 0, r, 0, Math.PI * 2);
   ctx.fill();
 
+  ctx.restore();
+}
+
+/** A very soft, wide wash in the star's hue, drawn *before* everything else in the frame — the
+ *  background starfield first, this halo second, then the star itself and all bodies — so the
+ *  starfield visibly recedes near Sol and Nova instead of competing with them for attention
+ *  (docs/UX_PASS_PLAN.md Task 2c). Deliberately almost imperceptible as a shape (a huge radius,
+ *  a low peak alpha) and `source-over`, not `lighter` like the corona above — this is meant to
+ *  read as "this region is the centre of something", not as another glow layer. Built fresh each
+ *  call rather than cached like buildCache's gradients: with only two stars on screen, the cost
+ *  of one extra createRadialGradient per star per frame is negligible next to the starfield's
+ *  hundreds of tiled stars, which is what the OffscreenCanvas caching in render/starfield.ts
+ *  actually exists to amortize. */
+export function drawStarHalo(ctx: CanvasRenderingContext2D, camera: Camera, star: StarVisual): void {
+  const { sx, sy } = camera.worldToScreen(star.wx, star.wy);
+  const r = star.radius * camera.zoom;
+  if (r < 0.5) return;
+
+  const haloRadius = r * 14;
+  const halo = ctx.createRadialGradient(sx, sy, 0, sx, sy, haloRadius);
+  halo.addColorStop(0, `hsla(${star.hue}, 70%, 60%, 0.1)`);
+  halo.addColorStop(1, `hsla(${star.hue}, 70%, 60%, 0)`);
+
+  ctx.save();
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(sx, sy, haloRadius, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }

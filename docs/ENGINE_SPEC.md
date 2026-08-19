@@ -114,7 +114,8 @@ internally, header sticky.
 Sections, in this order:
 
 0. **Header** — name, aliases, one-line definition, chips: task type, supervised/unsupervised,
-   year, difficulty (1–5 dots), tier badge.
+   year, tier badge. (`difficulty` remains on the schema below but is not rendered — no document
+   defines what a 1-5 value means; see docs/UX_PASS_PLAN.md Task 3d.)
 1. **Intuition** *(open)* — plain language + analogy, no notation.
 2. **How it works** *(open)* — numbered steps + hyperparameter table (`what` / `how to tune`).
 3. **When to use / When it fails** *(open)* — two columns. **Also the advisor's source data.**
