@@ -174,7 +174,7 @@ export const body = {
   id: 'prometheus',
   name: 'Prometheus',
   segment: 'Neural Network Foundations',
-  hook: 'The first body of the transit: single units become layers, layers become trainable, and training becomes a craft of its own.',
+  hook: 'Single units become layers, layers become trainable, and training becomes a craft of its own.',
   summary:
     'Prometheus collects the load-bearing ideas every deep network downstream of it depends on — the single trainable ' +
     'unit, the mechanism that computes its gradient, the menu of nonlinearities and initialization schemes that keep ' +

@@ -16,7 +16,10 @@ export interface SearchHandlers {
 }
 
 export interface SearchLayer {
-  open(): void;
+  /** `initialQuery`, when given, seeds the input and immediately shows its results — used by
+   *  ui/toolbar.ts's desktop search box, which is a launcher: typing into it opens this palette
+   *  and hands off whatever was typed so far, rather than running a second search UI of its own. */
+  open(initialQuery?: string): void;
   close(): void;
   toggle(): void;
   isOpen(): boolean;
@@ -162,7 +165,7 @@ export function createSearch(container: HTMLElement, idx: SearchIndex, handlers:
     }
   }
 
-  function build(): void {
+  function build(initialQuery: string): void {
     container.replaceChildren();
     container.setAttribute('aria-label', 'Search');
 
@@ -178,6 +181,7 @@ export function createSearch(container: HTMLElement, idx: SearchIndex, handlers:
     inputEl.setAttribute('aria-label', 'Search algorithms');
     inputEl.setAttribute('role', 'combobox');
     inputEl.setAttribute('aria-expanded', 'true');
+    inputEl.value = initialQuery;
     inputEl.addEventListener('input', () => renderResults(inputEl?.value ?? ''));
     panel.appendChild(inputEl);
 
@@ -191,17 +195,18 @@ export function createSearch(container: HTMLElement, idx: SearchIndex, handlers:
       if (e.target === container) close();
     });
 
-    renderResults('');
+    renderResults(initialQuery);
   }
 
-  function open(): void {
+  function open(initialQuery = ''): void {
     if (open_) return;
     lastFocused = document.activeElement;
     open_ = true;
-    build();
+    build(initialQuery);
     container.hidden = false;
     untrap = trapFocus(container, () => open_);
     inputEl?.focus();
+    inputEl?.setSelectionRange(initialQuery.length, initialQuery.length);
   }
 
   function close(): void {

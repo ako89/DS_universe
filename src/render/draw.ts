@@ -8,7 +8,7 @@ import type { Camera } from '../engine/camera.ts';
 import type { SceneBody } from '../engine/scene.ts';
 import { drawOrbit } from './orbit.ts';
 import { drawPlanet } from './planet.ts';
-import { drawStar } from './star.ts';
+import { drawStar, drawStarHalo } from './star.ts';
 import { drawRingsBack, drawRingsFront } from './rings.ts';
 import { drawBelt } from './belt.ts';
 
@@ -48,6 +48,13 @@ function drawMoons(ctx: CanvasRenderingContext2D, camera: Camera, body: SceneBod
 }
 
 export function drawScene(ctx: CanvasRenderingContext2D, camera: Camera, bodies: SceneBody[], t: number, highlight: Highlight = NO_HIGHLIGHT): void {
+  // A first pass draws each star's halo (render/star.ts's drawStarHalo) before anything else in
+  // the frame, so it sits over the background starfield (already drawn by main.ts's loop before
+  // calling drawScene) and under every star/body/moon drawn below (docs/UX_PASS_PLAN.md Task 2c).
+  for (const body of bodies) {
+    if (body.type === 'star') drawStarHalo(ctx, camera, { id: body.id, wx: body.wx, wy: body.wy, radius: body.radius, hue: body.hue });
+  }
+
   for (const body of bodies) {
     if (body.type === 'star') {
       drawStar(ctx, camera, { id: body.id, wx: body.wx, wy: body.wy, radius: body.radius, hue: body.hue }, t);

@@ -31,7 +31,7 @@ export const body = {
   id: 'mercury',
   name: 'Mercury',
   segment: 'Linear & Probabilistic Foundations',
-  hook: 'The starting point: fit a line, a probability, or a boundary directly from the data, in closed form.',
+  hook: 'Fit a line, a probability, or a boundary directly from the data, in closed form.',
   summary:
     'Mercury holds the linear and probabilistic foundations of the field — models simple enough to solve in ' +
     'closed form or with a short, well-understood fit, and the baseline every fancier model downstream is ' +

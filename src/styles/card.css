@@ -112,11 +112,6 @@
   font-size: var(--fs-xs);
 }
 
-.chip-dots {
-  color: var(--focus);
-  letter-spacing: 0.1em;
-}
-
 .chip-tier {
   color: var(--text);
   border-color: var(--hairline-strong);

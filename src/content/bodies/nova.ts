@@ -50,7 +50,7 @@ export const body = {
   id: 'nova',
   name: 'Nova',
   segment: 'Attention & Scale',
-  hook: 'The outer star: attention as the sole primitive, and what happens once you scale it up.',
+  hook: 'Attention as the sole primitive, and what happens once you scale it up.',
   summary:
     "Nova is the map's second gravitational centre, opposite Sol. Where Sol's bodies are built around an " +
     "explicit loss minimised over parameters, Nova's energy source is a single mechanism — attention — scaled " +

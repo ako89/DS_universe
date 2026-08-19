@@ -21,10 +21,6 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: st
   return node;
 }
 
-function difficultyDots(difficulty: number): string {
-  return '●'.repeat(difficulty) + '○'.repeat(5 - difficulty);
-}
-
 function paradigmChip(entry: Entry): string | null {
   const tasks = entry.facets.task;
   if (tasks.some((t) => SUPERVISED.has(t)) && !tasks.some((t) => UNSUPERVISED.has(t))) return 'supervised';
@@ -46,7 +42,6 @@ export function buildHeader(entry: Entry): HTMLElement {
   const paradigm = paradigmChip(entry);
   if (paradigm) chips.appendChild(el('span', 'chip', paradigm));
   chips.appendChild(el('span', 'chip', String(entry.year)));
-  chips.appendChild(el('span', 'chip chip-dots', difficultyDots(entry.difficulty)));
   chips.appendChild(el('span', 'chip chip-tier', `Tier ${entry.tier}`));
   header.appendChild(chips);
 

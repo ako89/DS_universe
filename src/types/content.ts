@@ -76,6 +76,10 @@ export interface Entry {
   aliases?: string[];
   tier: 1 | 2;
   year: number;
+  // Currently unrendered in the UI: no document in this repo defines what a value means, and
+  // showing an unexplained number was found to be worse than showing nothing (docs/UX_PASS_PLAN.md
+  // Task 3d). Kept on the schema and in every entry's authored data — the field is frozen (see
+  // this file's header) and the values are real judgements a future rubric could resurface.
   difficulty: 1 | 2 | 3 | 4 | 5;
   hook: string; // ONE sentence, <=120 chars, shown on hover
   intuition: string; // plain language, no notation

@@ -118,7 +118,7 @@ export const body = {
   id: 'sol',
   name: 'Sol',
   segment: 'The Objective',
-  hook: 'The inner star: pick a model, define a loss, minimize it over data — the objective every planet runs on.',
+  hook: 'Pick a model, define a loss, minimize it over data — the objective every planet runs on.',
   summary:
     "Sol is the map's first gravitational centre. Every supervised algorithm elsewhere in the system is, underneath " +
     'its particular name, an instance of the same five-part recipe collected here: a hypothesis class, a loss that ' +
