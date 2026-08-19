@@ -195,6 +195,21 @@ before/after to the commit message body or the PR description if one is opened.
 
 **Decision: two lines** — body name on top, full `segment` beneath, smaller and dimmer.
 
+### Where the family name appears, all together
+
+`segment` is *already* rendered in three places, none of them visible before the user commits to
+a click — which is the whole complaint. Do not duplicate this work; extend it.
+
+| Surface | Today | After this pass |
+|---|---|---|
+| Map label | name only | **name + segment (new, 3b)** |
+| Tooltip (hover / first-tap preview) | name, hook, meta | **+ segment (new, 3d)** |
+| Guide region list | — | **name + segment + moon count (new, Task 4)** |
+| Card eyebrow | segment (`card-sections.ts:38`) | unchanged |
+| Advisor result eyebrow | segment (`advisor.ts:51`) | unchanged |
+| Screen-reader map summary | segment (`a11y-status.ts:41`) | unchanged |
+| Breadcrumb | name only | unchanged — it is a short nav trail, not a description |
+
 ### 3a. Stars need a segment too
 
 `src/content/system.ts`'s `BodyPlacement` has `segment`; `StarPlacement` does **not**. Both stars
@@ -253,12 +268,46 @@ it explicitly:
   `tokens.css` if you prefer keeping every size in one file, which the file header asks for) and
   `color: var(--text-faint)`. Keep the `text-shadow` on both lines; it is what makes labels
   legible over the starfield.
-- On mobile (`@media (max-width: 859px)`), consider hiding `.body-label-segment` outright — the
-  Guide covers the same ground and screen width is scarce. Judge by screenshot.
+- On mobile (`@media (max-width: 859px)`), hiding `.body-label-segment` outright is acceptable
+  **provided 3d ships** — the first-tap tooltip then carries the family name at the moment it is
+  needed, and screen width is scarce. Judge by screenshot; if the labels are legible with both
+  lines, keep both.
+
+### 3d. Put the family name in the tooltip
+
+`src/ui/tooltip.ts`'s `describe()` builds the body case as `{title, hook, meta}` where `meta` is
+`"${moonCount} moons · ${eraRange}"`. It never shows `segment`. That is the highest-value single
+line in this task: on desktop the tooltip is what hover produces, and on mobile — given the
+tap-to-preview model kept in Task 1 — the tooltip **is** the preview, the exact moment the user
+is deciding whether to tap again.
+
+Add the segment to the body branch. Prefer a dedicated field over stuffing it into `meta`, so the
+tooltip can style it like the card's eyebrow rather than like the mono meta line:
+
+```ts
+export interface TooltipContent {
+  title: string;
+  eyebrow?: string;   // the body's segment — its algorithm family
+  hook?: string;
+  meta: string;
+}
+```
+
+Read it from `contentBodies.get(bodyId)?.segment`, falling back to the `placement` once
+`StarPlacement` gains the field in 3a. Render it above the title with a `.tooltip-eyebrow` class
+in `overlay.css`, mirroring `.card-eyebrow`.
+
+Leave the **entry** branch alone — a moon's tooltip already shows its own name, and its parent's
+family is one level of context it does not need mid-hover.
+
+`src/ui/a11y-status.ts`'s `createStatusAnnouncer` reuses `describe()` and joins
+`[title, hook, meta]`. Add `eyebrow` to that join so the screen reader announces the family too,
+or it will silently fall out of sync with what sighted users see.
 
 ### Acceptance
 
 At default framing, every visible label shows its family and the map is not a wall of text.
+Hovering a body (or first-tapping it on touch) shows its family in the tooltip.
 Zoomed in on one body, its label shows both lines. No label overlaps another.
 
 ---
