@@ -20,6 +20,7 @@ Setup: `npm install` first (no `node_modules` in a fresh clone). Validate with
 | 3 | Where the family name goes | **Tooltip only**, in parentheses after the body name — `Jupiter (Clustering, Density & Anomaly)`. **Map labels stay name-only.** |
 | 3b | Body hooks | **Trimmed, not removed** — only a leading positional clause ("The inner star:") comes off, as a content edit to five modules. Everything after it stays. |
 | 3c | A star's moons | Tooltip gains one authored line saying these are foundations/building blocks, **not models** — the reason a moon of a sun isn't just a planet. |
+| 3d | Difficulty | **Removed from the UI** (tooltip meta line and card dots chip). It has no definition anywhere in the repo. The field and its 195 values stay in the data. |
 | 4 | Guide location & shape | **Expand the existing `?` overlay into a "Guide"**. The family list is an **expand/collapse accordion** — one caret row per family, opening to its algorithms. Shortcut table last. |
 | 4b | Star naming | Clicking Sol or Nova shows the **system** name in parentheses: `Sol (Classical Statistical Learning)`, `Nova (Attention & Scale)`. |
 | 5 | Search affordance | **Always-visible search input on desktop; magnifier icon on mobile.** Advisor and Guide get icon buttons alongside. |
@@ -349,7 +350,44 @@ This is navigational copy about how the map is organised, not a pedagogical clai
 PLAN.md §0's rules. Keep it to one sentence and do not assert anything about the algorithms
 themselves.
 
-### 3d. Keep the screen reader in sync
+### 3d. Remove difficulty from the UI
+
+The difficulty rating is shown in two places and **defined in none**. Searched exhaustively:
+`types/content.ts:79` and `ENGINE_SPEC §7` declare `difficulty: 1 | 2 | 3 | 4 | 5`; `ENGINE_SPEC
+§4` says it renders as 1–5 dots; `CONTENT_GUIDE` lists it as a required field and shows `3` in the
+gold-standard example. Nothing anywhere states what any value *means*. Showing an unexplained
+number is worse than showing nothing, so it comes out.
+
+**Remove from both user-facing surfaces:**
+
+1. `src/ui/tooltip.ts` — the entry meta line
+   `` `Tier ${entry.tier} · difficulty ${entry.difficulty}/5 · ${entry.year}` `` becomes
+   `` `Tier ${entry.tier} · ${entry.year}` ``. Update the file's header comment, which names
+   "tier / difficulty / year" as the meta line's contents.
+2. `src/ui/card-sections.ts` — delete `difficultyDots()` (lines ~24-26) and the
+   `chip chip-dots` append in `buildHeader` (line ~49). Check `card.css` for a now-unused
+   `.chip-dots` rule and remove it too.
+
+**Nothing else is affected.** `difficulty` is *not* read by `data/search-index.ts`,
+`ui/advisor-rank.ts` or `ui/advisor.ts` — verified by grep — so ranking and search behaviour are
+untouched. No test references it.
+
+**Keep the data.** Leave the `difficulty` field on `Entry` and its 195 authored values in
+`content/bodies/*.ts` in place. Three reasons: `types/content.ts` is explicitly **frozen** and says
+schema changes need the user's sign-off first; deleting the field means editing all 27 content
+modules; and the values are real authored judgements that can be resurfaced the moment a rubric
+exists. Add a one-line comment on the schema field noting it is currently unrendered and why.
+
+**Update the docs so they stop describing a chip that no longer exists:** `ENGINE_SPEC §4`'s card
+header spec (line ~117, "year, difficulty (1–5 dots), tier badge") must drop the difficulty dots.
+Leave `§7`'s schema listing and `CONTENT_GUIDE`'s required-field table alone — the field still
+exists and is still authored.
+
+**Open question for the user, do not decide it yourself:** whether to go further and remove
+`difficulty` from the schema and all 195 entries. That is a frozen-schema change plus a 27-file
+content pass, so it is deliberately *not* part of this task. Ask before doing it.
+
+### 3e. Keep the screen reader in sync
 
 `src/ui/a11y-status.ts`'s `createStatusAnnouncer` reuses `describe()` and joins
 `[title, hook, meta]`. Update the join to include `family` and to tolerate the now-absent body
@@ -361,8 +399,9 @@ rather than dropping the family silently.
 Hovering Jupiter shows `Jupiter (Clustering, Density & Anomaly)` above its hook. Hovering Sol
 shows `Sol (Classical Statistical Learning)` and a hook that now starts *"Pick a model, define a
 loss…"* with no "The inner star:" preamble. Hovering one of Sol's moons additionally shows the
-note explaining it is a foundation rather than a model. Hovering a planet's moon is unchanged. Map
-labels are visually unchanged from today. The live region announces the family.
+note explaining it is a foundation rather than a model. No tooltip or card anywhere shows a
+difficulty rating; an algorithm's meta line reads `Tier 1 · 1996`. Map labels are visually
+unchanged from today. The live region announces the family.
 
 ---
 
@@ -409,10 +448,11 @@ throws loudly if they diverge, so a mismatch cannot ship silently.
 6. **Keyboard shortcuts.** The existing `<dl>`, unchanged, last. Add the new toolbar buttons' own
    affordances if any shortcut changes.
 
-### Reading a tooltip and a card: tier, difficulty, year
+### Reading a tooltip and a card: tier and year
 
-`ui/tooltip.ts` renders `Tier 1 · difficulty 3/5 · 1996` for every algorithm and the app never
-says what any of it means. Add a short key to the Guide.
+`ui/tooltip.ts` renders a meta line for every algorithm and the app never says what it means. Add
+a short key to the Guide. **Difficulty is not in it — it is being removed from the UI entirely,
+see Task 3d.** The key covers two values.
 
 **Tier — documented, write it confidently.** From PLAN.md §2 and CONTENT_GUIDE §"Tier 2 stubs":
 Tier 1 is a full card; Tier 2 is *short, not partial* — a real entry with the same quality bar on
@@ -427,23 +467,6 @@ load-bearing, independently verified originating publication, not "the year it b
 1847 to Cauchy, with SGD's separate 1951 Robbins–Monro root explained in the entry rather than
 folded into one invented date). One sentence in the Guide, plus "where a date was a judgement
 call, the entry says so" — which is true and sets the right expectation.
-
-**Difficulty — STOP AND ASK. There is no rubric anywhere in this repo.** `types/content.ts` and
-ENGINE_SPEC §7 define only `difficulty: 1 | 2 | 3 | 4 | 5`, and ENGINE_SPEC §4 says it renders as
-1–5 dots. Nothing states what a 3 means (DBSCAN is one). Writing "difficulty rates the maths
-background an entry assumes" would be **inventing a definition for 195 already-authored values**
-— precisely what PLAN.md §0 rule 14 forbids.
-
-Do this instead, in order:
-
-1. Read the actual distribution — sample the 1s and the 5s across `content/bodies/*.ts` and see
-   what separates them.
-2. Propose one sentence to the user, with the evidence, and get sign-off.
-3. Only then write it into the Guide.
-
-Until it is signed off, ship the Guide with tier and year explained and difficulty described
-purely mechanically ("a 1–5 rating shown as filled dots, comparable across entries") — accurate,
-and asserting nothing about what the scale measures.
 
 ### The family accordion
 
@@ -690,8 +713,7 @@ anything tracked there.
   it for individual algorithms. That is an interpretation of "get rid of the hook in the tooltip"
   — both of the user's mentions were about bodies and stars. If they meant *all* tooltips, it is a
   one-line change, but say so first: on mobile the first-tap preview would then show only a name
-  and `Tier 2 · difficulty 3/5 · 1996`, which is close to useless for deciding whether to tap
-  again.
+  and `Tier 2 · 1996`, which is close to useless for deciding whether to tap again.
 - **Sol's two names.** `segment` ('The Objective', its own six moons) and `systemName`
   ('Classical Statistical Learning', everything orbiting it) are deliberately different, and the
   tooltip shows the latter. If clicking Sol and reading "Classical Statistical Learning" over a
@@ -700,9 +722,9 @@ anything tracked there.
 - Long family names in the tooltip title (`Saturn (Dimensionality Reduction & Representation)`)
   push against `.tooltip`'s `max-width: 280px`. Let it wrap; if it wraps to three lines and looks
   bad, report it rather than truncating a family name.
-- **The difficulty scale is undefined in this repo** and the Guide is being asked to explain it.
-  This is a hard stop, not a judgement call — see Task 4's section. Propose wording with evidence
-  and get sign-off before writing a definition for 195 existing values.
+- **Whether `difficulty` should also leave the schema.** Task 3d removes it from the UI and keeps
+  the field and its 195 values. Going further means unfreezing `types/content.ts` and editing 27
+  content modules — ask first, and never as a side effect of this pass.
 - **The colon rule is not mechanical.** Task 3b lists the five hooks whose leading clause is
   genuinely positional. If your own read of the 27 disagrees, say which and why rather than
   widening or narrowing the list silently.
