@@ -17,10 +17,13 @@ Setup: `npm install` first (no `node_modules` in a fresh clone). Validate with
 | # | Question | Decision |
 |---|---|---|
 | 1 | Mobile tap model | **Keep tap-to-preview.** First tap previews, second tap on the same target opens. Fix the reliability bugs underneath it. |
-| 3 | Where the family name goes | **Tooltip only**, in parentheses after the body name — `Jupiter (Clustering, Density & Anomaly)`. **Map labels stay name-only.** The body/star hook is removed from the tooltip. |
+| 3 | Where the family name goes | **Tooltip only**, in parentheses after the body name — `Jupiter (Clustering, Density & Anomaly)`. **Map labels stay name-only.** |
+| 3b | Body hooks | **Trimmed, not removed** — only a leading positional clause ("The inner star:") comes off, as a content edit to five modules. Everything after it stays. |
+| 3c | A star's moons | Tooltip gains one authored line saying these are foundations/building blocks, **not models** — the reason a moon of a sun isn't just a planet. |
 | 4 | Guide location & shape | **Expand the existing `?` overlay into a "Guide"**. The family list is an **expand/collapse accordion** — one caret row per family, opening to its algorithms. Shortcut table last. |
 | 4b | Star naming | Clicking Sol or Nova shows the **system** name in parentheses: `Sol (Classical Statistical Learning)`, `Nova (Attention & Scale)`. |
 | 5 | Search affordance | **Always-visible search input on desktop; magnifier icon on mobile.** Advisor and Guide get icon buttons alongside. |
+| 6 | Motion | **Freezes as soon as anything is highlighted** (desktop hover / mobile first tap). Resumes only on click-away or zoom-out — not on hover-off. |
 
 ---
 
@@ -87,12 +90,11 @@ re-previews. Repeat forever. **This is the loop the user is stuck in.**
 
 **Fix — two parts:**
 
-1. **Freeze the target while a touch preview is live.** After a preview tap, hold the scene
-   still so the second tap has something stationary to hit. Add a "preview hold" to `main.ts`:
-   while a touch-originated highlight is active, pass `paused = true` to `updateScene` (the same
-   mechanism `card.isOpen()` already uses in the `startLoop` callback). Expire the hold on a
-   timeout (~4s), on the second tap, or on a tap that lands on empty space.
-2. **Make the second tap forgiving.** Instead of requiring an exact re-hit, treat a second tap
+1. **Freeze the scene while anything is highlighted** — this is now **Task 6**, which covers
+   desktop hover and mobile first-tap under one mechanism. Do Task 6 before this one; it removes
+   most of this failure on its own, because the target stops moving the instant it is previewed.
+2. **Make the second tap forgiving**, which is still needed for a finger that lands a few pixels
+   off on the second tap even against a stationary target. Instead of requiring an exact re-hit, treat a second tap
    within a small screen radius (~`MIN_PICK_PX * 1.5`) of the *currently previewed* target's
    screen position as a hit on that target, even if the strict `hitTest` missed. Implement this
    as a fallback inside the touch branch of `onPointerUp`, not by loosening `hitTest` itself
@@ -266,15 +268,43 @@ export interface TooltipContent {
 }
 ```
 
-**2. Drop the hook from body and star tooltips.** In `describe()`'s body branch, stop setting
-`hook`. The `Body.hook` strings are evocative region descriptions ("The inner star: pick a model,
-define a loss…") and read as confusing next to a concrete family name.
+**2. Trim the positional preamble off body and star hooks — keep the rest.** The hook stays in
+the tooltip; only the scene-setting clause that names the thing's *place in the orrery* comes off,
+because that is what reads as confusing next to a concrete family name.
 
-**Explicit reading of the instruction, correct this if wrong:** the hook is removed from
-**body and star** tooltips only. A **moon's** tooltip keeps its `Entry.hook`, because that is a
-plain one-line description of a single algorithm and — with tap-to-preview kept on mobile
-(Task 1) — it is the entire payload of the first-tap preview. Removing it would leave a moon
-preview showing nothing but a name and `Tier 2 · difficulty 3/5 · 1996`.
+**Do NOT implement this as a runtime `split(':')`.** Only a minority of the 27 body hooks open
+with a positional preamble, and most hooks that contain a colon are using it substantively — a
+blanket strip destroys them. Verified against the actual content:
+
+| Body | Hook opens with | Strip? |
+|---|---|---|
+| Sol | `The inner star:` | **yes** |
+| Nova | `The outer star:` | **yes** |
+| Mercury | `The starting point:` | **yes** |
+| Prometheus | `The first body of the transit:` | **yes** |
+| Vulcan | `The forge of computer vision:` | **yes** |
+| Terra | `Models you read as a flowchart:` | **no** — that clause *is* the explanation |
+| Venus | `Methods with no model to fit:` | **no** — same |
+| Genesis | `How raw text becomes a base model:` | **no** — same |
+| Athenaeum | `Connects a language model to facts it never memorized:` | **no** — same |
+| Daedalus | `Turns a language model into something that acts:` | **no** — same |
+| Velocity | `Makes a trained model fast and cheap to actually run:` | **no** — same |
+
+Stripping Terra's would leave *"a chain of yes/no questions, and the pruning that says where to
+stop"* — a sentence with no subject. The remaining ~16 hooks contain no colon at all.
+
+**So: do it as a one-time authoring edit**, not a transform. Hand-edit the five hooks in the table
+above in their `content/bodies/*.ts` modules, dropping the leading clause and re-capitalising.
+Sol becomes *"Pick a model, define a loss, minimize it over data — the objective every planet
+runs on."* Nova becomes *"Attention as the sole primitive, and what happens once you scale it
+up."* Leave every other hook untouched, and leave `describe()` alone — it keeps returning `hook`
+for bodies as it does today.
+
+Re-read every one of the 27 hooks before deciding; the five above are this pass's reading, not a
+closed list. If a sixth reads as positional preamble, strip it and say which.
+
+A **moon's** `Entry.hook` is untouched throughout — those have no positional preamble and are the
+entire payload of the mobile first-tap preview.
 
 **3. Update `render()`** to emit the parenthetical and to stop emitting `.tooltip-hook` when
 there is no hook. The `↵ enter` suffix on the meta line still needs the touch-aware treatment
@@ -283,7 +313,43 @@ from Task 1d.
 `src/styles/overlay.css`: add `.tooltip-family` (inline after the title, `--text-dim`, normal
 weight against the title's 600). `.tooltip-hook` stays for the moon case.
 
-### 3c. Keep the screen reader in sync
+### 3c. Explain what a star's moons are
+
+A planet's moons are algorithms. **A star's moons are not**, and nothing on screen says so — which
+is why a moon of a sun reads as "why isn't this just a planet?".
+
+What they actually are, verified against the content modules:
+
+- **Sol's six** — Empirical Risk Minimization, Loss Functions, Maximum Likelihood & MAP, Gradient
+  Descent, Bias–Variance Decomposition, Convexity & the No-Free-Lunch Theorem. `sol.ts`'s own file
+  header states the relationship outright: *"Every other Tier 1 entry already written elsewhere in
+  the map (OLS, ridge, lasso, logistic regression, naive Bayes, every tree ensemble, gradient
+  boosting...) is a specific instance of one of these six ideas."* Use that; it is sourced, in-repo
+  and exactly the point.
+- **Nova's six** — Self-Attention, Multi-Head Attention, Transformer Block, Positional Encoding,
+  Scaling Laws, Encoder-Only vs. Decoder-Only vs. Encoder-Decoder. These are the architectural
+  primitives every body in the Nova system is built out of, not models you would train.
+
+**Implementation.** Add one authored sentence per star to `StarPlacement` in `system.ts`,
+alongside `systemName` from 3a:
+
+```ts
+moonNote: string;   // shown in the tooltip of any moon belonging to this star
+```
+
+Sol: *"A foundation every algorithm on every planet is an instance of — not a model in itself."*
+Nova: *"A building block the models in this system are assembled from — not a model in itself."*
+
+In `describe()`'s entry branch, when the entry's parent body is a star, append `moonNote` as a
+distinct line (its own field on `TooltipContent`, styled like `.tooltip-meta` but not mono, so it
+reads as a note rather than as the hook). Resolve the parent via `registry.ts`'s `entryBody()`
+and check its id against `system.stars` — do not hard-code `'sol'`/`'nova'` at the call site.
+
+This is navigational copy about how the map is organised, not a pedagogical claim, so it is inside
+PLAN.md §0's rules. Keep it to one sentence and do not assert anything about the algorithms
+themselves.
+
+### 3d. Keep the screen reader in sync
 
 `src/ui/a11y-status.ts`'s `createStatusAnnouncer` reuses `describe()` and joins
 `[title, hook, meta]`. Update the join to include `family` and to tolerate the now-absent body
@@ -292,8 +358,10 @@ rather than dropping the family silently.
 
 ### Acceptance
 
-Hovering Jupiter shows `Jupiter (Clustering, Density & Anomaly)` with no hook line. Hovering Sol
-shows `Sol (Classical Statistical Learning)`. Hovering a moon still shows its one-line hook. Map
+Hovering Jupiter shows `Jupiter (Clustering, Density & Anomaly)` above its hook. Hovering Sol
+shows `Sol (Classical Statistical Learning)` and a hook that now starts *"Pick a model, define a
+loss…"* with no "The inner star:" preamble. Hovering one of Sol's moons additionally shows the
+note explaining it is a foundation rather than a model. Hovering a planet's moon is unchanged. Map
 labels are visually unchanged from today. The live region announces the family.
 
 ---
@@ -333,11 +401,49 @@ throws loudly if they diverge, so a mismatch cannot ship silently.
      foundational first, then variants and successors.
    - Tier 1 entries get a full card; Tier 2 are stubs, and render smaller and dimmer (PLAN.md
      §2). Say so, so a thin card reads as intentional rather than missing.
-4. **The family accordion.** The wayfinding payload, and the direct answer to "I'm just guessing
+4. **Reading a tooltip and a card.** Explain the three values that appear on every algorithm —
+   they currently show up with no key anywhere in the app. See its own section below.
+5. **The family accordion.** The wayfinding payload, and the direct answer to "I'm just guessing
    what body is what algorithm family." See its own section below — this is the centrepiece of the
    Guide, not a footnote.
-5. **Keyboard shortcuts.** The existing `<dl>`, unchanged, last. Add the new toolbar buttons' own
+6. **Keyboard shortcuts.** The existing `<dl>`, unchanged, last. Add the new toolbar buttons' own
    affordances if any shortcut changes.
+
+### Reading a tooltip and a card: tier, difficulty, year
+
+`ui/tooltip.ts` renders `Tier 1 · difficulty 3/5 · 1996` for every algorithm and the app never
+says what any of it means. Add a short key to the Guide.
+
+**Tier — documented, write it confidently.** From PLAN.md §2 and CONTENT_GUIDE §"Tier 2 stubs":
+Tier 1 is a full card; Tier 2 is *short, not partial* — a real entry with the same quality bar on
+hook, intuition, how-it-works, when-to-use and references, which skips exactly four optional
+fields (`math`, `code`, `hyperparameters`, `complexity`). Say that plainly, because a Tier 2 card
+otherwise reads as unfinished. Also worth saying: Tier 2 moons render smaller and dimmer on
+purpose (PLAN.md §2), so the visual hierarchy is legible rather than looking like a rendering bug.
+
+**Year — documented, write it carefully.** The convention is the year of the single most
+load-bearing, independently verified originating publication, not "the year it became popular".
+`sol.ts`'s file header documents this and several deliberate edge cases (Gradient Descent is dated
+1847 to Cauchy, with SGD's separate 1951 Robbins–Monro root explained in the entry rather than
+folded into one invented date). One sentence in the Guide, plus "where a date was a judgement
+call, the entry says so" — which is true and sets the right expectation.
+
+**Difficulty — STOP AND ASK. There is no rubric anywhere in this repo.** `types/content.ts` and
+ENGINE_SPEC §7 define only `difficulty: 1 | 2 | 3 | 4 | 5`, and ENGINE_SPEC §4 says it renders as
+1–5 dots. Nothing states what a 3 means (DBSCAN is one). Writing "difficulty rates the maths
+background an entry assumes" would be **inventing a definition for 195 already-authored values**
+— precisely what PLAN.md §0 rule 14 forbids.
+
+Do this instead, in order:
+
+1. Read the actual distribution — sample the 1s and the 5s across `content/bodies/*.ts` and see
+   what separates them.
+2. Propose one sentence to the user, with the evidence, and get sign-off.
+3. Only then write it into the Guide.
+
+Until it is signed off, ship the Guide with tier and year explained and difficulty described
+purely mechanically ("a 1–5 rating shown as filled dots, comparable across entries") — accurate,
+and asserting nothing about what the scale measures.
 
 ### The family accordion
 
@@ -483,16 +589,91 @@ produces results without ever pressing `/`.
 
 ---
 
+---
+
+## Task 6 — Freeze orbital motion while something is highlighted
+
+**Behaviour asked for.** As soon as a tooltip appears — desktop hover, or mobile first tap — the
+bodies stop moving. They start again only when the user **clicks/taps away** or **zooms out**.
+
+Today `main.ts`'s loop freezes motion only for `prefers-reduced-motion` and while the card is
+open:
+
+```ts
+const motionActive = !reduceMotion && !card.isOpen();
+```
+
+This task adds a third condition, and it subsumes Task 1c's preview hold — one mechanism serving
+both platforms. Do it **before** Task 1c.
+
+### 6a. Hold state
+
+`main.ts` already owns the single source of truth for what is pointed at: `highlight`, set by
+`setHighlight()` from mouse hover, label focus, the Left/Right moon cursor and touch alike. Gate
+on that.
+
+```ts
+const motionHeld = highlight.bodyId !== undefined;
+```
+
+**Freeze positions only — let `clock` keep advancing.** The existing `motionActive` flag gates
+both `updateScene` *and* the `clock` that drives twinkle, star pulse and gas drift. Reusing it
+wholesale would make the whole scene look dead on hover. Split them:
+
+```ts
+const positionsMoving = !reduceMotion && !card.isOpen() && !motionHeld;
+const visualsMoving   = !reduceMotion && !card.isOpen();
+updateScene(bodies, dt * motionTimeScale(camera.zoom), !positionsMoving);
+if (visualsMoving) clock = t;
+```
+
+Leave `motionTimeScale`'s zoom easing alone — it is orthogonal and still wanted.
+
+### 6b. Release conditions
+
+Per the instruction, hovering *off* does **not** resume — that would make the scene stutter as the
+cursor crosses bodies on its way somewhere. The hold releases on:
+
+- **A click or tap on empty space.** `input.ts`'s `onPointerUp` already computes `hit`; when it is
+  `null` and the gesture was not a drag, clear the highlight (`setHighlight(null, undefined)`),
+  which releases the hold for free.
+- **Zooming out.** In `onWheel` and the pinch branch of `onTouchMove`, when the applied factor is
+  `< 1`, clear the highlight. Zooming *in* must not release it — zooming in is what someone does
+  to read or click the thing they just hovered.
+- **Esc / going back to the universe view**, since `goHome`/`goBack` already reset the view.
+
+Add an `onClearHighlight?()` handler to `InputHandlers` rather than having `input.ts` reach into
+`main.ts`'s state — it stays a pure event translator, per its own file header.
+
+### 6c. Watch for
+
+- **The hold must not survive a card opening and closing.** `card.close()` restores focus to the
+  label, which re-fires `onFocusChange` and re-highlights. That is correct (you are back looking
+  at that body) but verify it does not leave the scene frozen with no visible tooltip.
+- **Keyboard users** get the hold via label focus, which is a real improvement — Tabbing to a body
+  stops it drifting. Make sure blurring the last label releases it, or a keyboard user who Tabs
+  out of the map leaves the scene frozen forever.
+- **Do not freeze during a drag.** Panning with a body under the cursor should still feel live;
+  check `dragging` before applying the hold, or just accept it — decide by feel and say which.
+
+### Acceptance
+
+Desktop: hovering a planet stops all orbital motion immediately; the starfield twinkle and star
+pulse keep going; moving the cursor to empty space does *not* resume; clicking empty space does;
+scrolling to zoom out does; zooming in does not. Mobile: the same, driven by first tap and
+tap-away. Nothing resumes while a card is open.
+
 ## Sequencing and commits
 
-Do them in this order — Task 1 is the actual bug, and Task 3's new `StarPlacement` fields are
-what Task 4's accordion labels the two stars with.
+Do them in this order. Task 6 lands first because Task 1c's mobile fix depends on it, and Task 3's
+new `StarPlacement` fields are what Task 4's accordion labels the two stars with.
 
-1. `Fix mobile tap handling: cumulative drag threshold, no double-pan, preview hold`
-2. `Dim the background starfield; strengthen Sol and Nova`
-3. `Name each body's algorithm family in the tooltip; drop the region hook`
-4. `Expand the ? overlay into a Guide with an expandable family list`
-5. `Add a visible search box (desktop) and search button (mobile)`
+1. `Freeze orbital motion while a body is highlighted` (Task 6 — Task 1 depends on it)
+2. `Fix mobile tap handling: cumulative drag threshold, no double-pan, forgiving second tap` (Task 1)
+3. `Dim the background starfield; strengthen Sol and Nova` (Task 2)
+4. `Name each body's algorithm family in the tooltip; trim positional hook preambles` (Task 3)
+5. `Expand the ? overlay into a Guide with an expandable family list` (Task 4)
+6. `Add a visible search box (desktop) and search button (mobile)` (Task 5)
 
 Each commit must leave `npm test && npm run validate && npm run build` green. Branch:
 `claude/ds-universe-mobile-ux-64z7j3`, push with `git push -u origin <branch>`. **Do not open a
@@ -519,5 +700,15 @@ anything tracked there.
 - Long family names in the tooltip title (`Saturn (Dimensionality Reduction & Representation)`)
   push against `.tooltip`'s `max-width: 280px`. Let it wrap; if it wraps to three lines and looks
   bad, report it rather than truncating a family name.
+- **The difficulty scale is undefined in this repo** and the Guide is being asked to explain it.
+  This is a hard stop, not a judgement call — see Task 4's section. Propose wording with evidence
+  and get sign-off before writing a definition for 195 existing values.
+- **The colon rule is not mechanical.** Task 3b lists the five hooks whose leading clause is
+  genuinely positional. If your own read of the 27 disagrees, say which and why rather than
+  widening or narrowing the list silently.
+- **Motion resuming only on click-away/zoom-out** means a user who hovers a body and then does
+  nothing leaves the scene frozen indefinitely. That is what was asked for and it is defensible.
+  If it feels wrong in the hand, report it — adding "resume on pan-drag" is the obvious next
+  candidate, but it is the user's call.
 - Any place these tasks would require asserting a fact about an algorithm that is not already
   written in the repo: stop and ask. PLAN.md §0 rule 14.
